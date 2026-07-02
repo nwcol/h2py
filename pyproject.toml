@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools", "cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "h2py"
+version = "0.0.0"
+authors = [
+    {name="Nicholas Collier", email="niwicollier@gmail.com"}
+]
+description = "Demographic inference with H2, a two-locus statistic"
+keywords = [
+    "population genetics",
+    "popgen",
+    "demographic inference",
+    "evolutionary inference",
+    "ancient DNA",
+]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+requires-python = ">=3.11"
+dependencies = [
+    "demes>=0.2",
+    "demesdraw",
+    "matplotlib>=3.10",
+    "moments-popgen>=1.6",
+    "numpy>=2.0",
+    "pandas>=3.0",
+    "scipy>=1.16",
+    "tskit>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython",
+    "jupyter",
+]
+
+[tool.setuptools]
+packages = ["h2py"]
+
+
