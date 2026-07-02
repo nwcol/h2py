@@ -1,2 +1,3 @@
-tests/
-notebooks/
+todo.txt
+h2py.egg-info/
+h2py/__pycache__/
