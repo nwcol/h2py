@@ -33,8 +33,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ipython",
-    "jupyter",
+    "pytest>=9.0",
+    "ipython>=9.0",
+    "jupyter>=1.1",
 ]
 
 [tool.setuptools]
