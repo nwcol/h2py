@@ -65,17 +65,25 @@ class GeneticMask:
     def n_accessible_sites(self):
         return self.cumsum[-1]
 
-    def get_positions(self, index=0):
-        """Get ``index``-indexed positions of accessible sites."""
-        return np.where(self.mask)[0] + self.offset + index
-
     @classmethod
-    def from_intervals(cls, intervals, offset=0, chrom_end=None):
+    def from_intervals(
+        cls,
+        intervals,
+        offset=0,
+        chrom_end=None,
+        interval=None
+    ):
         """
         Initialize from an array of BED-style (0-indexed, half-open) intervals.
         """
-        if chrom_end is None:
-            chrom_end = intervals[-1, 1]
+        if chrom_end is not None and interval is not None:
+            raise ValueError("pass either chrom_end or interval")
+
+        if interval is not None:
+            offset, chrom_end = interval
+        else:
+            if chrom_end is None:
+                chrom_end = intervals[-1, 1]
 
         length = chrom_end - offset
         if length < 1:
@@ -105,12 +113,17 @@ class GeneticMask:
         bed_file,
         offset=0,
         chrom_end=None,
-        chromosome=None
+        interval=None,
+        chromosome=None,
     ):
         """ """
         intervals = _read_bed_file(bed_file, chromosome=chromosome)
         return cls.from_intervals(intervals, offset=offset,
-                                  chrom_end=chrom_end)
+                                  chrom_end=chrom_end, interval=interval)
+
+    def to_positions(self, index=0):
+        """Get ``index``-indexed positions of accessible sites."""
+        return np.where(self.mask)[0] + self.offset + index
 
     def to_intervals(self):
         """Get BED-style intervals"""
@@ -124,10 +137,11 @@ class GeneticMask:
 
     def to_bed_file(self, path, chromosome):
         """Write a BED file from this mask"""
+        chromosome = str(chromosome)
         intervals = self.to_intervals()
         with open(path, "w") as fout:
             for (start, end) in intervals:
-                line = "\t".join([chromosome, str(start), str(end)] + "\n"
+                line = "\t".join([chromosome, str(start), str(end)]) + "\n"
                 fout.write(line)
         return
 

@@ -972,19 +972,9 @@ def _get_bin_tuples(bins):
     return unfolded_bins
 
 
-def _get_bed_file_positions(bed_file, interval=None):
-    """Load a vector of 0-indexed positions from a BED file"""
-    regions = utils._read_bed_file(bed_file)[0]
-    mask = utils._regions_to_mask(regions)
-    positions = np.where(mask == False)[0]
-    if interval is not None:
-        start, end = interval
-        positions = positions[(positions >= start) & (positions < end)]
-    return positions
-
-
 def _assign_map_coordinates(positions, rec_map_file):
-    map_pos, map_coords = utils._read_hapmap_map(rec_map_file)
-    coords = np.interp(positions, map_pos, map_coords)
-    return coords
+    """Assign map coordinates to positions by loading a recombination map."""
+    map_pos, map_coords = utils._read_rec_map_file(rec_map_file)
+    # Assume that recombination map positions are 1-indexed
+    return np.interp(positions - 1, map_pos, map_coords)
 
