@@ -1,5 +1,5 @@
 """
-Matrix classes for storing different representations of sequence data.
+Matrix classes for representing different types of sequence data.
 """
 
 import collections
@@ -10,173 +10,204 @@ import re
 from . import utils
 
 
-class HaplotypeMatrix():
+class HaplotypeMatrix:
     """
-    Wrapper class for potentially multiallelic haplotype matrices.
+    Matrix of haplotypes.
+
+    Parameters
+    ----------
+    haplotypes : array-like, shape (n_sites, 2*n_samples)
+        Array of haplotypes. These may be biallelic or multiallelic, with 0
+        representing the reference allele and 1, 2, 4 representing alternate
+        alleles.
+    positions : array-like, shape (n_sites,)
+        Array of 0-indexed haplotype site positions.
+    pop_map : dict
+        Mapping between population labels and indices of diploid samples.
     """
 
-    def __init__(
-        self,
-        haplotypes,
-        positions,
-        samples=None,
-        populations=None
-        ):
-        self.haplotypes = np.asarray(haplotypes, dtype=np.int8)
-        self.positions = np.asarray(positions, drype=np.int64)
+    def __init__(self, haplotypes, positions, pop_map):
+        self.haplotypes = np.asarray(haplotypes, dtype=np.float64)
+        self.positions = np.asarray(positions, dtype=np.int64)
+        self.pop_map = pop_map
+        # Check haplotypes shape against positions, pop_map
+        if self.n_sites != len(positions):
+            raise ValueError("haplotypes, positions site numbers are unequal")
+        if self.n_samples != sum([len(self.pop_map[p]) for p in self.pops]):
+            raise ValueError("haplotypes, pop_map sample numbers are unequal")
 
-        assert self.haplotypes.shape[1] % 2 == 0
+    def __str__(self):
+        return (f"HaplotypeMatrix ({self.n_sites} sites, "
+                f"{self.n_samples} samples, {self.n_pops} pops)")
 
-        if samples is None:
-            samples = list(range(self.n_samples))
-        self.samples = samples
-
-        if populations is None:
-            populations = {"all": sample_names}
-        self.populations = populations
+    def __repr__(self):
+        return (f"HaplotypeMatrix({self.haplotypes}, "
+                f"{self.positions}, {self.pop_map})")
 
     @property
-    def n_samples(self):
-        return int(self.haplotypes.shape[1] / 2)
+    def shape(self):
+        return self.haplotypes.shape
 
     @property
     def n_haplotypes(self):
         return self.haplotypes.shape[1]
 
     @property
+    def n_samples(self):
+        return int(self.n_haplotypes / 2)
+
+    @property
     def n_sites(self):
         return self.haplotypes.shape[0]
 
     @property
-    def n_variant_sites(self):
-        return np.sum(np.unique(self.haplotypes, axis=1) > 1)
+    def pops(self):
+        return [p for p in self.pop_map]
 
-    def slice_sample(self, sample):
-        """Get the bare haplotype array for a specific sample."""
-        idx = self.samples.index(sample)
-        return self.haplotypes[:, 2 * idx:2 * (idx + 1)]
+    @property
+    def n_pops(self):
+        return len(self.pop_map)
 
-    def slice_population(self, population):
-        """Get the bare haplotype array for a specific population."""
-        samples = self.populations[population]
-        idxs = []
-        for sample in samples:
-            idx = self.samples.index(sample)
-            idxs += [2 * idx, 2 * (idx + 1)]
-        return self.haplotypes[:, idxs]
+    def slice_haplotype(self, idx):
+        """Access a single haplotype as a 1d array."""
+        return self.haplotypes[:, idx]
+
+    def slice_sample(self, idx):
+        """Access the bare haplotype array for a specific sample."""
+        return self.haplotypes[:, self.get_haplotype_idx(idx)]
+
+    def slice_pop(self, pop):
+        """Access the bare haplotype array for a specific population."""
+        idx = [i for s in self.pop_map[pop] for i in self.get_haplotype_idx(s)]
+        return self.haplotypes[:, idx]
+
+    @staticmethod
+    def get_haplotype_idx(sample_idx):
+        """Get a list of indices to access the haplotypes of a sample."""
+        return [2 * sample_idx, 2 * sample_idx + 1]
 
     @classmethod
     def from_vcf(
+        cls,
         vcf_file,
         bed_file=None,
-        pop_file=None,
         interval=None,
-        apply_filter=False,
-        ):
+        chromosome=None,
+        pop_file=None,
+        ac_filter=True,
+        filtered=False,
+    ):
         """
-        Load haplotypes from a VCF file.
+        Load a haplotype matrix from a VCF file.
         """
-        haplotypes, positions, samples, populations = utils.read_vcf_file(
+        haplotypes, positions, pop_map = read_vcf_file(
             vcf_file,
             bed_file=bed_file,
+            interval=interval,
+            chromosome=chromosome,
             pop_file=pop_file,
             phased=True,
-            interval=interval,
-            apply_filter=apply_filter,
-            )
-        ret = cls(
-            haplotypes,
-            positions,
-            samples=samples,
-            populations=populations,
-            )
-        return ret
-
+            ac_filter=ac_filter,
+            filtered=filtered,
+        )
+        return cls(haplotypes, positions, pop_map)
 
 
 class GenotypeMatrix():
     """
-    Wrapper class for biallelic genotype matrices.
+    Matrix of biallelic genotypes.
 
     Parameters
     ----------
-    genotypes : np.ndarray
-        Shape (n_variants, n_diploids). Takes values 0, 1, 2, for homozygous
-        reference, heterozygous, and homozygous alternate genotypes.
+    genotypes : array-like, shape (n_sites, n_samples)
+        Array of biallelic genotypes. Entries 0, 1, 2 denote genotypes 0/0,
+        0/1, 1/1 respectively.
+    positions : array-like, shape (n_sites,)
+        Array of 0-indexed site positions.
+    pop_map : dict
+        Mapping between population labels and lists of constituent sample
+        indices.
     """
 
-    def __init__(
-        self,
-        genotypes,
-        positions,
-        samples=None,
-        populations=None,
-        ):
-        self.genotypes = np.asarray(genotypes, dtype=np.int8)
+    def __init__(self, genotypes, positions, pop_map):
+        self.genotypes = np.asarray(genotypes, dtype=np.float64)
         self.positions = np.asarray(positions, dtype=np.int64)
+        self.pop_map = pop_map
+        # Check genotype matrix shape against positions, pop_map
+        if len(self.positions) != self.n_sites:
+            raise ValueError("genotypes, positions site numbers are unequal")
+        if sum([len(self.pop_map[p]) for p in self.pop_map]) != self.n_samples:
+            raise ValueError("genotypes, pop_map sample numbers are unequal")
 
-        if samples is None:
-            n_samples = genotypes.shape[1]
-            samples = list(range(n_samples))
-        self.samples = samples
+    def __str__(self):
+        return (f"GenotypeMatrix ({self.n_sites} sites, "
+                f"{self.n_samples} samples, {self.n_pops} pops)")
 
-        if populations is None:
-            populations = {"all": sample_names}
-        self.populations = populations
+    def __repr__(self):
+        return (f"GenotypeMatrix({self.genotypes}, {self.positions}, "
+                f"{self.pop_map}")
+
+    @property
+    def shape(self):
+        return self.genotypes.shape
+
+    @property
+    def n_samples(self):
+        return self.genotypes.shape[1]
 
     @property
     def n_sites(self):
         return self.genotypes.shape[0]
 
     @property
-    def n_samples(self):
-        return self.genotypes.shape[1]
+    def pops(self):
+        """Access population names."""
+        return [p for p in self.pop_map]
 
-    def slice_sample(self, sample):
-        """Get the genotype vector for a given sample."""
-        idx = self.samples.index(sample)
-        return self.genotypes[:, idx]
+    @property
+    def n_pops(self):
+        return len(self.pop_map)
 
-    def slice_population(self, population):
+    def slice_sample(self, sample_idx):
+        """Access the 1d genotype array for a given sample."""
+        return self.genotypes[:, sample_idx]
+
+    def slice_pop(self, pop):
         """Get the genotype array for a given population."""
-        samples = self.populations[population]
-        idxs = [self.samples.index(sample) for sample in samples]
-        return self.genotypes[:, idxs]
+        return self.genotypes[:, self.pop_map[pop]]
 
     @classmethod
     def from_vcf(
+        cls,
         vcf_file,
         bed_file=None,
-        pop_file=None,
         interval=None,
-        apply_filter=False,
-        ):
+        chromosome=None,
+        pop_file=None,
+        filtered=False,
+    ):
         """
-        Load genotypes from a VCF file.
+        Load a genotype matrix from a VCF file.
         """
-        genotypes, positions, samples, populations = utils.read_vcf_file(
+        genotypes, positions, pop_map = read_vcf_file(
             vcf_file,
             bed_file=bed_file,
-            pop_file=pop_file,
-            phased=False,
             interval=interval,
-            apply_filter=apply_filter,
-            )
-        ret = cls(
-            genotypes,
-            positions,
-            samples=samples,
-            populations=populations,
-            )
-        return ret
+            chromosome=chromosome,
+            pop_file=pop_file,
+            filtered=filtered,
+        )
+        return cls(genotypes, positions, pop_map)
 
     @classmethod
-    def from_tree_sequence():
-        pass
-
-    @classmethod
-    def from_haplotype_matrix():
-        pass
+    def from_haplotype_matrix(cls, haplotype_matrix):
+        """
+        Instantiate a genotype matrix by simplifying a haplotype matrix.
+        """
+        haplotypes = haplotype_matrix.haplotypes
+        # TODO drop multiallelic sites if present!!!!
+        genotypes = haplotypes[:, ::2] + haplotypes[:, 1::2]
+        return cls(genotypes, haplotypes.positions, haplotypes.pop_map)
 
 
 class GenotypeProbMatrix():
@@ -185,15 +216,13 @@ class GenotypeProbMatrix():
 
     Parameters
     ----------
-    genotype_probs : np.ndarray, shape (n_sites, 3*n_samples)
-        Array of genotype probabilities. Rows contain p(0/0), p(0/1), p(1/1)
-        for each sample.
+    genotype_probs : array-like, shape (n_sites, 3*n_samples)
+        Array of genotype probabilities. Probabilities p(0/0), p(0/1), p(1/1)
+        for sample ``i`` are housed in columns ``3*i, 3*i+1, 3*i+2``.
     positions : np.ndarray, shape (n_sites)
         0-indexed positions of sites in ``genotype_probs``.
     pop_map : dict
-        Mapping from population labels (str) to lists of indices. Indices
-        access diploid samples, e.g. index ``i`` corresponds to columns sliced
-        by ``3*i:3*(i+1)``.
+        Mapping from population labels to lists of sample indices.
     """
 
     def __init__(self, genotype_probs, positions, pop_map):
@@ -201,10 +230,12 @@ class GenotypeProbMatrix():
         self.positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
         # Check matrix shape against positions and pop_map
-        if len(self.genotype_probs) != len(self.positions):
-            raise ValueError("genotype_probs, positions site numbers disagree")
+        if len(self.positions) != self.n_sites:
+            raise ValueError(
+                "genotype_probs, positions site numbers are unequal")
         if sum([len(self.pop_map[x]) for x in self.pop_map]) != self.n_samples:
-            raise ValueError("genotype_probs, pop_map sample numbers disagree")
+            raise ValueError(
+                "genotype_probs, pop_map sample numbers are unequal")
 
     def __str__(self):
         return (f"GenotypeProbMatrix ({self.n_sites} sites, "
@@ -213,6 +244,10 @@ class GenotypeProbMatrix():
     def __repr__(self):
         return (f"GenotypeProbMatrix({self.genotype_probs}, "
                 f"{self.positions}, {self.pop_map})")
+
+    @property
+    def shape(self):
+        return self.genotype_probs.shape
 
     @property
     def n_samples(self):
@@ -233,13 +268,18 @@ class GenotypeProbMatrix():
 
     def slice_sample(self, sample_idx):
         """Access the bare genotype probability array for a sample."""
-        return self.genotype_probs[:, sample_idx * 3:(sample_idx + 1) *3]
+        return self.genotype_probs[:, self.get_genotype_prob_idx(sample_idx)]
 
     def slice_pop(self, pop):
         """Access the bare genotype probability array for a population."""
-        sample_idx = self.pop_map[pop_idx]
-        col_idx = [i for s in sample_idx for i in range(3 * s, 3 * (s+1))]
-        return self.genotype_probs[:, col_idx]
+        idx = [i for s in self.pop_map[pop]
+               for i in self.get_genotype_prob_idx(s)]
+        return self.genotype_probs[:, idx]
+
+    @staticmethod
+    def get_genotype_prob_idx(sample_idx):
+        """Return the indices to genotype probabilities for a sample."""
+        return [3 * sample_idx, 3 * sample_idx + 1, 3 * sample_idx + 2]
 
     @classmethod
     def from_vcf(
@@ -261,7 +301,6 @@ class GenotypeProbMatrix():
             chromosome=chromosome,
             pop_file=pop_file,
             read_genotype_probs=True,
-            ac_filter=True,
             filtered=filtered,
         )
         return cls(genotype_probs, positions, pop_map)
@@ -325,8 +364,8 @@ def read_vcf_file(
 
     # Load mask and population files, if given
     if bed_file is not None:
-        mask_regions = _read_bed_file(bed_file)
-        site_mask = _regions_to_mask(mask_regions)
+        mask_regions = utils._read_bed_file(bed_file)
+        site_mask = utils._regions_to_mask(mask_regions)
     else:
         site_mask = None
 
@@ -440,7 +479,7 @@ def read_vcf_file(
 
 
 def _parse_haplotypes(elems, sample_idx, gt_idx):
-    """Extract allele codes (as strings) from a split VCF line."""
+    """Extract haplotypes (as strings) from a split VCF line."""
     samples = [elems[9:][i] for i in sample_idx]
     gt_strs = [s.split(":")[gt_idx] for s in samples]
     haplotypes = [a for gt in gt_strs for a in re.split("/|\\|", gt)]
@@ -475,10 +514,7 @@ def _read_pop_file(pop_file):
 
 
 def _convert_phred_scores(phred_arr):
-    """
-    Transform an array of biallelic genotype probabilities from Phred-scaled
-    probabilities to regular probabilities.
-    """
+    """Convert an array of Phred-scaled genotype probs. to regular probs."""
     assert phred_arr.shape[1] % 3 == 0
     n_samples = int(phred_arr.shape[1] / 3)
     prob_arr = np.zeros_like(phred_arr)
