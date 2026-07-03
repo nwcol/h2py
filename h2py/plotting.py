@@ -7,3 +7,8 @@ import numpy as np
 
 
 
+def plot_h2_curves_comp():
+
+    return
+
+

@@ -7,6 +7,7 @@ import gzip
 import numpy as np
 import re
 
+from .masks import GeneticMask
 from . import utils
 
 
@@ -364,10 +365,9 @@ def read_vcf_file(
 
     # Load mask and population files, if given
     if bed_file is not None:
-        mask_regions = utils._read_bed_file(bed_file)
-        site_mask = utils._regions_to_mask(mask_regions)
+        mask = GeneticMask.from_bed_file(bed_file)
     else:
-        site_mask = None
+        mask = None
 
     if pop_file is not None:
         pop_spec = _read_pop_file(pop_file)
@@ -420,10 +420,10 @@ def read_vcf_file(
                 if pos1 >= interval[1]:
                     break
 
-            if site_mask is not None:
-                if pos0 >= len(site_mask):
+            if mask is not None:
+                if pos0 >= len(mask):
                     break
-                if site_mask[pos0]:
+                if not mask[pos0]:
                     continue
 
             # Check whether the site passes filters
@@ -505,11 +505,18 @@ def _read_pop_file(pop_file):
         sample2 popB
         sample3 popA
     """
+    samples = set()
     populations = collections.defaultdict(list)
     with open(pop_file, "r") as fin:
+        header = fin.readline().strip().split()[:2]
+        if header[0] != "sample" or header[1] != "pop":
+            raise ValueError("pop_file format is unsupported")
         for line in fin:
-            sample, population = line.strip().split()
+            sample, population = line.strip().split()[:2]
+            if sample in samples:
+                raise ValueError(f"sample {sample} listed twice in pop_file")
             populations[population].append(sample)
+            samples.add(sample)
     return populations
 
 

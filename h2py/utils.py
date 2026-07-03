@@ -7,6 +7,12 @@ import numpy as np
 import pandas
 
 
+def _read_mut_map_file(
+    mut_map_file,
+):
+    return
+
+
 def _read_rec_map_file(
     rec_map_file,
     pos_col=None,
@@ -27,7 +33,7 @@ def _read_rec_map_file(
         map_col = "Map(cM)"
 
     if sep is None:
-        df = pandas.read_csv(rec_map_file, sep="\s+")
+        df = pandas.read_csv(rec_map_file, sep="\\s+")
 
     pos = np.array(df[pos_col], dtype=np.int64)
     coords = np.array(df[map_col], dtype=np.float64)
