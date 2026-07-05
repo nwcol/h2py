@@ -111,7 +111,7 @@ def compute_h2_stats(
         raise ValueError("cannot use_genotypes and use_genotype_probs")
 
     if report:
-        print(timestamp(), "Preparing data...")
+        print(timestamp(), "Preparing data ...")
 
     # Load sequence data
     if use_genotypes:
@@ -160,6 +160,8 @@ def compute_h2_stats(
                 matrix = haplotype_matrix
             else:
                 raise ValueError("haplotype_matrix or vcf_file required")
+    if report:
+        print(timestamp(), f"Loaded {matrix}")
 
     # Load recombination map data and check bins
     if r_bins is not None:
@@ -168,11 +170,17 @@ def compute_h2_stats(
         # Transform bin units to allow direct comparison to a genetic map
         bins = utils._map_function(np.array(r_bins))
         coords = _get_map_coords(rec_map_file, matrix.positions)
+        if report:
+            print(timestamp(),
+                  f"Loaded map coordinates ({coords[0]} to {coords[-1]} cM)")
     else:
         if bp_bins is None:
             raise ValueError("r_bins or bp_bins is required")
         bins = np.array(bp_bins)
         coords = matrix.positions
+        if report:
+            print(timestamp(),
+                  f"Using physical positions ({coords[0]} to {coords[-1]} bp)")
 
     # Load mutation map data
     if mut_map_file is not None:
@@ -191,10 +199,10 @@ def compute_h2_stats(
 
     if stats_to_compute is None:
         n_pops = len(pops)
-        stats_to_compute = (_h2_names(n_pops), _h_names(n_pops))
+        stats_to_compute = (utils._h2_names(n_pops), utils._h_names(n_pops))
 
     if report:
-        print(timestamp(), "Computing statistics...")
+        print(timestamp(), "Computing statistics ...")
     sums_list = _compute_h2_sums(
         matrix,
         coords,
@@ -212,7 +220,7 @@ def compute_h2_stats(
     # Compute denominators
     if compute_denoms:
         if report:
-            print(timestamp(), "Computing denominators...")
+            print(timestamp(), "Computing denominators ...")
         denoms = compute_h2_denoms(
             bed_file=bed_file,
             rec_map_file=rec_map_file,
@@ -887,24 +895,6 @@ def _compute_heterozygosity_gp(matrix, pops, stats_to_compute):
 # -----------------------------------------------------------------------------
 # Utilities
 # -----------------------------------------------------------------------------
-
-
-def _h_names(n_pops):
-    """Get a list of names for heterozygosity statistics"""
-    names = []
-    for ii in range(n_pops):
-        for jj in range(ii, n_pops):
-            names.append(f"H_{ii}_{jj}")
-    return names
-
-
-def _h2_names(n_pops):
-    """Get a list of names for H2 statistics"""
-    names = []
-    for ii in range(n_pops):
-        for jj in range(ii, n_pops):
-            names.append(f"H2_{ii}_{jj}")
-    return names
 
 
 def _get_bin_tuples(bins):

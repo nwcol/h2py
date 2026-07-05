@@ -66,20 +66,23 @@ class H2stats:
 
     @property
     def h_names(self):
-        return parsing._h_names(self.n_pops)
+        return utils._h_names(self.n_pops)
 
     @property
     def h2_names(self):
-        return parsing._h2_names(self.n_pops)
+        return utils._h2_names(self.n_pops)
 
-    def H(self, pops=None):
+    def h(self, pops=None):
         if pops is not None:
-            return self[-1]
+            return None
         else:
-            return self[-1]
+            return self.data[-1]
 
-    def H2(self, pops=None):
-        return
+    def h2(self, pops=None):
+        if pops is not None:
+            return None
+        else:
+            return self.data[:-1]
 
     def h_matrix(self):
         return
@@ -103,7 +106,7 @@ class H2stats:
         sampled_demes=None,
         sample_times=None,
         r_bins=None,
-        r=None,
+        rs=None,
         u=None,
         theta=None,
         phased=False,
@@ -120,10 +123,7 @@ class H2stats:
             graph = demes.load(graph)
 
         if sampled_demes is None:
-            sampled_demes = []
-
-        if sample_times is None:
-            pass
+            raise ValueError("`sampled_demes` is required")
 
         def model_func(_r):
             """Compute H2 at given recombination distances."""
@@ -143,10 +143,10 @@ class H2stats:
             ret.append(ld_stats.H())
             return ret
 
-        if r is not None and r_bins is None:
+        if rs is not None and r_bins is None:
             data = model_func(r)
 
-        elif r is None and r_bins is not None:
+        elif rs is None and r_bins is not None:
             if method == "midpoint":
                 midpoints = (r_bins[:-1] + r_bins[1:]) / 2
                 data = model_func(midpoints)
