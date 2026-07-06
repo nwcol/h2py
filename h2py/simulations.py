@@ -4,7 +4,12 @@ simulated sequences.
 """
 
 import numpy as np
+import random
 import tskit
+
+
+from . import utils
+from .utils import timestamp
 
 
 # -----------------------------------------------------------------------------
@@ -16,62 +21,66 @@ def sample_mutations(anc_seq, ts):
     """
     """
     sampled_nodes = [x.id for x in ts.nodes() if x.individual >= 0]
-    working = dict()
+    site_dict = dict()
 
     for mut in ts.mutations():
-        node = mut.node()
-        site = mut.site()
+        node = mut.node
+        site = mut.site
         pos = int(ts.sites_position[site])
         site_tree = ts.at(pos)
         #
-        children = [n for n in site_tree.nodes(n) if n in sampled_nodes]
+        children = [n for n in site_tree.nodes(node) if n in sampled_nodes]
         # True if there is another already-handled mutation at this position
-        if pos in working:
-            alleles = working[pos]
-            variants = alleles[children[0]]
+        if pos in site_dict:
+            variants = site_dict[pos]
+            anc_allele = variants[children[0]]
         else:
             anc_allele = anc_seq[pos]
             variants = [anc_allele for _ in sampled_nodes]
         # Sample derived allele
         choices = [b for b in "ACGT" if b != anc_allele]
-        derived_allele = np.random.choice(choices)
+        derived_allele = random.choice(choices)
         for child in children:
             variants[child] = derived_allele
-        working[pos] = site_variants
-
-    # Get array of strings
-    haplotypes = [[working[x] for x in working.keys()]]
-    sites = np.array([x for x in working.keys()], dtype=np.int64)
-    return sites, haplotypes
+        site_dict[pos] = variants
+    return site_dict
 
 
-def write_vcf(fname, ref_seq, anc_seq, variants, sample_ids, chrom="0"):
+def generate_sequence(anc_seq, site_dict, idx):
+    """
+    """
+    new_seq = [b for b in anc_seq]
+    for pos in site_dict:
+        new_seq[pos] = site_dict[pos][idx]
+    return "".join(new_seq)
+
+
+def write_vcf(
+    path,
+    ref_seq,
+    site_dict,
+    sample_ids,
+    chrom="0"
+):
     """
     Write a phased VCF file (.vcf or .vcf.gz) describing simulated variation.
 
-    Parameters
-    ----------
-    fname : str
-        Output filename.
-    ref_seq : str
-        String defining the reference sequence.
-    anc_seq : str
-    variants : dict
-        A dictionary that maps positions (0-indexed) to sorted allelic states.
-    sample_ids : list of str
-        Sample identifiers.
-    chrom : str
-        Chromosome identifier.
+    # TODO: fixed differences from the reference!
     """
     seq_len = len(ref_seq)
 
-    if fname.endswith(".gz"):
+    if path.endswith(".gz"):
         open_func = gzip.open
     else:
         open_func = open
-    with open_func(fname, "w") as fout:
+    with open_func(path, "w") as fout:
         # write header
-        header_elems = [
+        header_lines = [
+            "##fileformat=VCFv4.1\n",
+            f"##contig=<ID={chrom},length={len(ref_seq)}>\n",
+            '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">\n',
+        ]
+        cols = [
             "#CHROM",
             "POS",
             "ID",
@@ -81,32 +90,24 @@ def write_vcf(fname, ref_seq, anc_seq, variants, sample_ids, chrom="0"):
             "FILTER",
             "INFO",
             "FORMAT"] + sample_ids
-        header = "\t".join(header_elems) + "\n"
-        fout.write(header)
+        header_lines.append("\t".join(cols) + "\n")
+        for line in header_lines:
+            fout.write(line)
 
-        for pos0 in range(seq_len):
-            if pos0 in variants:
-                pos1 = pos0 + 1
-                ref = ref_seq[pos0]
-                site_variants = variants[pos0]
-                unique_alleles = set(site_variants)
-                alt_alleles = [a for a in unique_alleles if a != ref]
-                alt = ",".join(alt_alleles)
-                all_alleles = [ref] + alt_alleles
-                codes = [all_alleles.index(a) for a in site_variants]
-            else:
-                if ref_seq[pos0] != anc_seq[pos0]:
-                    pos1 = pos0 + 1
-                    ref = ref_seq[pos0]
-                    alt = anc_seq[pos0]
-                    codes = [1 for _ in range(2 * len(sample_ids))]
-                else:
-                    continue
-            genotypes = [
-                f"{x}|{y}" for x, y in zip(codes[::2], codes[1::2])]
+        for pos in site_dict:
+            # Note that `pos` is 0-indexed~
+            ref = ref_seq[pos]
+            variants = site_dict[pos]
+            allele_set = set(variants)
+            # Make sure `ref` is a the first element in this list
+            alts = [a for a in allele_set if a != ref]
+            alt = ",".join(alts)
+            ordered_alleles = [ref] + alts
+            codes = [ordered_alleles.index(a) for a in variants]
+            genotypes = [f"{x}|{y}" for x, y in zip(codes[::2], codes[1::2])]
             line_elems = [
                 chrom,
-                str(pos1),
+                str(pos + 1),
                 ".",
                 ref,
                 alt,
@@ -124,37 +125,30 @@ def write_vcf(fname, ref_seq, anc_seq, variants, sample_ids, chrom="0"):
 # -----------------------------------------------------------------------------
 
 
-def sample_sequencing_reads(
-    ref_fname,
-    sample_fname,
-    out_fname,
+def generate_sam_file(
+    path,
+    ref_seq,
+    sample_seqs,
+    ref_name,
+    sample_name,
+    chrom=None,
     depth=10,
     read_model=None,
     map_model=None,
     qual_model=None,
-    pmd_model=None,
-    paired=False,
-    verbose=0):
+    report=True,
+):
     """
-    Simulate sequencing reads from a diploid sequence and save them in a .sam
-    file.
-
-    Parameters
-    ----------
-    ref_fname : str
-        Expected header format: ">chrN", where N is the chromosome number.
-
-    sample_fname : str
-        Expected header formats: ">samplename:chrN:seqI", where samplename is
-        the label assigned to the sample, N is the chromosome number, and I
-        specifies the homolog number (0 or 1).
-
-    out_fname : str
-
-    Returns
-    -------
-    None
+    read model:
     """
+    ref_seq = np.array([b for b in ref_seq])
+    sample_seqs = [np.array([b for b in sample_seqs[0]]),
+                   np.array([b for b in sample_seqs[1]])]
+
+
+    # set up models
+    mean_read_len = 50
+
     # Define the columns to be filled
     sam_fields = [
         "QNAME",
@@ -170,73 +164,69 @@ def sample_sequencing_reads(
         "QUAL",
         "RG",
         "NM",
-        ]
+    ]
 
     # Define the name of the readgroup
     readgroup = "SimReadGroup1"
     readgroup_symbol = f"RG:Z:{readgroup}"
 
-    # Set up distributions
-    read_distr = set_up_distribution(read_model)
-    map_distr = set_up_distribution(map_model)
-    qual_distr = set_up_distribution(qual_model)
-
-    # Load data
-    ref_seqs, chroms = lib.read_fasta(ref_fname)
-    ref_seq = ref_seqs[0]
-    chrom = chroms[0]
-    ref_name = chrom
-    ref_len = len(ref_seq)
-    sample_seqs, labels = lib.read_fasta(sample_fname)
-    sample_name = labels[0].split(":")[0]
-
-    # ref_seq = np.array([x for x in ref_seq])
-    # seqs = [np.array([x for x in seq]) for seq in seqs]
-
     for sample_seq in sample_seqs:
         assert len(sample_seq) == len(ref_seq)
 
-    # Initialize array for counting
-    coverage = np.zeros(len(ref_seq))
-    n_reads = 0
+    seq_len = len(ref_seq)
+    n_reads = int((seq_len * depth) / mean_read_len)
 
-    with open(out_fname, "w") as fout:
+
+    # Sample read positions and lengths
+    read_lens = np.random.gamma(5, scale=10,  size=n_reads).astype(np.int64)
+    read_lens[read_lens < 10] = 10
+    read_starts = np.random.randint(0, seq_len, size=n_reads)
+    read_seqs = np.random.randint(0, 2, size=n_reads)
+    read_strands = np.random.choice([-1, 1], size=n_reads)
+
+    map_scores = np.random.normal(60, 10, size=n_reads).astype(np.int64)
+    map_scores[map_scores < 0] = 0
+    map_scores[map_scores > 255] = 255
+
+    # Sample quality scores in blocks for efficiency
+    def get_qual_block():
+        qual_block = np.random.normal(30, 10, size=1000000)
+        qual_block[qual_block < 0] = 0
+        qual_block[qual_block > 40] = 40
+        return qual_block
+
+    qual_block = get_qual_block()
+    block_idx = 0
+
+    coverage = 0
+
+    # Write the output file
+    with open(path, "w") as fout:
         # Write the header
-        header = get_header(
-            readgroup,
-            sample_name,
-            chrom,
-            ref_name,
-            ref_len)
+        header = get_sam_header(readgroup, sample_name, chrom, ref_name, seq_len)
         fout.write(header)
 
-        while np.mean(coverage) < depth:
+        for ii in range(n_reads):
             qname = f"{sample_name}:{n_reads}"
+            # Grab cached read characteristics
+            read_len = read_lens[ii]
+            tlen = read_len * read_strands[ii]
+            read_start = read_starts[ii]
+            pos = read_start + 1
+            read_seq = sample_seqs[read_seqs[ii]][read_start:read_start+read_len]
 
-            # Sample one homolog
-            sample_seq = sample_seqs[np.random.randint(2)]
-
-            # Sample a read
-            pos0, raw_read, strand = sample_read(sample_seq, read_distr)
-            pos = pos0 + 1
-            if strand == 1:
-                tlen = len(raw_read)
-            else:
-                tlen = -len(raw_read)
-
-
-            # Simulate sequencing error
-            err_read, quals = simulate_seq_error(raw_read, qual_distr)
-            read = "".join(err_read)
-
-            # Get quality scores for each base
-            qual_codes = encode_quality_scores(quals)
-
-            # Sample map quality
-            mapq = map_distr(1)[0]
+            if block_idx + read_len > len(qual_block):
+                qual_block = get_qual_block()
+                block_idx = 0
+            read_quals = qual_block[block_idx:block_idx + read_len]
+            block_idx += read_len
+            qual_codes = encode_quality_scores(read_quals)
+            # err_read = sample_errors(read_seq, read_quals)
+            read = "".join(read_seq)
+            mapq = map_scores[ii]
 
             # Build CIGAR string using `ref`
-            cigar = get_cigar_string(ref_seq, pos0, read)
+            cigar = get_cigar_string(ref_seq, read_start, read)
 
             # Find flag
             flag = 0
@@ -244,7 +234,7 @@ def sample_sequencing_reads(
                 flag += 16
 
             # Find distance to the reference sequence
-            ref_dist = get_ref_distance(ref_seq, pos0, read)
+            ref_dist = get_ref_distance(ref_seq, read_start, read)
             ref_dist_symbol = f"NM:i:{ref_dist}"
 
             record = {
@@ -265,23 +255,19 @@ def sample_sequencing_reads(
             line = "\t".join([str(record[x]) for x in sam_fields]) + "\n"
             fout.write(line)
 
-            # Increment coverage array
-            coverage[pos:pos + len(read)] += 1
-            n_reads += 1
-
-            if verbose:
-                if n_reads % verbose == 0:
-                    print(f"sampled read {n_reads}; coverage {np.mean(coverage)}")
+            coverage += read_len
+            if report:
+                if ii % 1000 == 0:
+                    depth_now = coverage / seq_len
+                    print(timestamp(), f"Wrote read {ii}; depth {depth_now:3}")
+    if report:
+        depth_now = coverage / seq_len
+        print(timestamp(), f"Wrote read {ii}; depth {depth_now:3}")
+        print(timestamp(), f"Finished writing {path}")
     return
 
 
-
-
-
-
-
-
-def get_header(
+def get_sam_header(
     readgroup,
     sample_name,
     chrom,
@@ -336,28 +322,20 @@ def get_header(
     return header
 
 
-def simulate_pmd(read):
-    """
-    """
-    # Simulate post-mortem damage to the DNA molecule
-    return read
-
-
 def get_cigar_string(ref_seq, pos, read):
 
     return f"{len(read)}M"
 
-def simulate_seq_error(read, distr_func):
+
+def simulate_seq_error(read):
     """
     """
     # simulate read sequencing error
-    #quals = np.random.normal(mean, 5, len(read)).astype(int)
-    #quals[quals < 0] = 0
-    #quals[quals > 40] = 40
+    quals = np.random.normal(mean, 5, len(read)).astype(int)
+    quals[quals < 0] = 0
+    quals[quals > 40] = 40
 
-    # Sample quality scores
-    quals = distr_func(len(read))
-    err_probs = inv_phred_func(quals)
+    err_probs = utils.inverse_phred_function(quals)
     has_err = np.random.rand(len(read)) < err_probs
     err_read = []
     for i in range(len(read)):
@@ -372,106 +350,22 @@ def simulate_seq_error(read, distr_func):
     return err_read, quals
 
 
-def get_ref_distance(ref_seq, pos0, read):
+def get_ref_distance(ref_seq, pos, read):
     """
     Find the edit distance between a reference and sample sequence.
     """
-    ref_segment = ref_seq[pos0:pos0 + len(read)]
-    return sum([x != y for x, y in zip(ref_segment, read)])
-
-
-
-
-def sample_read(sample_seq, distr_func):
-    """
-    Sample a read with a gamma-distributed length and returns the position of
-    the read and its sequence.
-
-    At present, samples only from the positive strand. This may change in the
-    future.
-    """
-    read_len = int(distr_func(1)[0])
-    strand = 1
-    pos0 = np.random.randint(0, len(sample_seq) - read_len + 1)
-    start = pos0
-    end = pos0 + read_len
-    read = sample_seq[start:end]
-    return pos0, read, strand
-
-
-
-
-def get_reverse_complement(seq):
-    """
-    Take the reverse complement of a sequence.
-
-    Parameters
-    ----------
-    seq : string, np.ndarray, or list
-        Sequence to reverse-complement.
-
-    Returns
-    -------
-    reverse_complement : string
-        Reverse complement of `seq`.
-    """
-    mapping = {
-        "A": "T",
-        "T": "A",
-        "G": "C",
-        "C": "G"}
-    reverse_complement = "".join([mapping[x] for x in seq[::-1]])
-    return reverse_complement
+    ref_segment = ref_seq[pos:pos + len(read)]
+    return np.sum(ref_segment != read)
 
 
 def encode_quality_scores(scores):
     """Convert a list or array of `scores` to a Phred code string."""
     # Round scores down
-    scores = [int(x) for x in scores]
-    mapping = {
-        0: "!",
-        1: '"',
-        2: "#",
-        3: "$",
-        4: "%",
-        5: "&",
-        6: "'",
-        7: "(",
-        8: ")",
-        9: "*",
-        10: "+",
-        11: ",",
-        12: "-",
-        13: ".",
-        14: "/",
-        15: "0",
-        16: "1",
-        17: "2",
-        18: "3",
-        19: "4",
-        20: "5",
-        21: "6",
-        22: "7",
-        23: "8",
-        24: "9",
-        25: ":",
-        26: ";",
-        27: "<",
-        28: "=",
-        29: ">",
-        30: "?",
-        31: "@",
-        32: "A",
-        33: "B",
-        34: "C",
-        35: "D",
-        36: "E",
-        37: "F",
-        38: "G",
-        39: "H",
-        40: "I"}
-    codes = "".join([mapping[x] for x in scores])
+    idx = np.asarray(scores, dtype=np.int64)
+    symbols = np.array(["!", '"', "#", "$", "%", "&", "'", "(", ")", "*",
+                        "+", ",", "-", ".", "/", "0", "1", "2", "3", "4",
+                        "5", "6", "7", "8", "9", ":", ";", "<", "=", ">",
+                        "?", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I"])
+    codes = "".join(symbols[idx])
     return codes
-
-
 
