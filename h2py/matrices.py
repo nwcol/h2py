@@ -8,6 +8,7 @@ import numpy as np
 import re
 
 from .masks import GeneticMask
+from . import simulations
 from . import utils
 
 
@@ -281,6 +282,60 @@ class GenotypeProbMatrix():
     def get_genotype_prob_idx(sample_idx):
         """Return the indices to genotype probabilities for a sample."""
         return [3 * sample_idx, 3 * sample_idx + 1, 3 * sample_idx + 2]
+
+    @classmethod
+    def from_haplotype_matrix(cls):
+        return
+
+    @classmethod
+    def from_genotype_matrix(cls):
+        """
+        Instantiate from a genotype matrix: place 1.0 mass on true genotypes
+        """
+        # TODO
+        return
+
+    @classmethod
+    def from_tree_sequence(
+        cls,
+        ts,
+        samples,
+        ref_seq=None,
+        depth=10,
+        p_err=0.01,
+        priors=None,
+        filtered=True,
+    ):
+        """
+        Use a simple simulation to generate a genotype probability matrix from
+        a simulated tree sequence.
+
+        Importantly: the "binary" mutation model must be used to simulate
+        mutation with ``msprime.sim_mutations``.
+
+        Parameters
+        ----------
+        # TODO write
+        samples : dict
+            Sample argument passed to ``msprime.sim_ancestry``, with form
+            ``{"pop": sample_size,}``. Used to set up population map.
+        """
+        sites, genotype_probs = simulations.generate_genotype_probs(
+            ts,
+            ref_seq=ref_seq,
+            depth=depth,
+            p_err=p_err,
+            priors=priors,
+            filtered=filtered,
+        )
+        # Set up population mapping
+        pop_map = dict()
+        idx = 0
+        for pop in samples:
+            n_samples = samples[pop]
+            pop_map[pop] = list(range(idx, idx + n_samples))
+            idx += n_samples
+        return cls(genotype_probs, sites, pop_map)
 
     @classmethod
     def from_vcf(

@@ -1,3 +1,6 @@
+"""
+simulates genotype probs in a slightly sloppy way
+"""
 
 import demes
 import msprime
@@ -13,7 +16,7 @@ if not os.path.isdir("data/"):
 # Simulation parameters
 L = 1_000_000
 n_reps = 50
-n_samples = 4  # per population
+n_samples = 1  # per population
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -27,30 +30,36 @@ bed_file = "data/coverage.bed"
 
 def demographic_model():
     b = demes.Builder()
-    b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=5e3)])
+    b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=3e3)])
     b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=1e4)])
-    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=1e3)])
+    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=1e4)])
     # b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
     g = b.resolve()
     return g
 
 
-def run_msprime(g):
+def run_sim(g):
     demog = msprime.Demography.from_demes(g)
     samples = {"pop0": n_samples, "pop1": n_samples}
-    tseqs = msprime.sim_ancestry(
+    ts = msprime.sim_ancestry(
         samples,
         demography=demog,
         sequence_length=L,
         recombination_rate=r,
-        num_replicates=n_reps,
     )
-    for ii, ts in enumerate(tseqs):
-        ts = msprime.sim_mutations(ts, rate=u)
-        vcf_file = f"data/split_mig.{ii}.vcf"
-        with open(vcf_file, "w+") as fout:
-            ts.write_vcf(fout)
-    return
+    ts = msprime.sim_mutations(ts, rate=u, model="binary")
+    gp = h2py.GenotypeProbMatrix.from_tree_sequence(ts, samples, depth=30)
+    sums = h2py.parsing.compute_h2_stats(
+        genotype_prob_matrix=gp,
+        use_genotypes=False,
+        use_genotype_probs=True,
+        pop_file=pop_file,
+        bed_file=bed_file,
+        rec_map_file=rec_map_file,
+        r_bins=r_bins,
+        report=True,
+    )
+    return sums
 
 
 def write_pop_file():
@@ -73,28 +82,15 @@ def write_bed_file():
         fout.write(f"none\t0\t{L}\n")
 
 
-def parse_stats(rep_ii):
-    sums = h2py.parsing.compute_h2_stats(
-        vcf_file=f"data/split_mig.{rep_ii}.vcf",
-        use_genotypes=True,
-        pop_file=pop_file,
-        bed_file=bed_file,
-        rec_map_file=rec_map_file,
-        r_bins=r_bins,
-        report=True,
-    )
-    return sums
-
-
 if __name__ == "__main__":
     write_pop_file()
     write_bed_file()
     write_rec_map_file()
     g = demographic_model()
-    run_msprime(g)
-    sums = {i: parse_stats(i) for i in range(n_reps)}
+    sums = {i: run_sim(g) for i in range(n_reps)}
     boot_data = h2py.parsing.bootstrap_data(sums)
-    model = h2py.H2stats.from_moments(g, sampled_demes=["pop0", "pop1"], u=u, r_bins=r_bins, phased=False)
+    model = h2py.H2stats.from_moments(g, sampled_demes=["pop0", "pop1"], u=u,
+                                      r_bins=r_bins)
     h2py.plotting.plot_h2_curves_comp(
         model,
         boot_data["means"],

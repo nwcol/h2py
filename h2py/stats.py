@@ -136,7 +136,10 @@ class H2stats:
             idx = 0
             for ii in range(n_demes):
                 for jj in range(ii, n_demes):
-                    h2 = ld_stats.H2(ii, jj, phased=phased)
+                    if ii == jj:
+                        h2 = ld_stats.H2(ii)
+                    else:
+                        h2 = ld_stats.H2(ii, jj, phased=phased)
                     for bb, h2_b in enumerate(h2):
                         ret[bb][idx] = h2_b
                     idx += 1
