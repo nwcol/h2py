@@ -1,0 +1,12 @@
+- masking and GP array coverage.
+- make the denominator calculator use a mask prepared in the main compute_h2_stats fxn.
+- parsing verbosity: spit out interval, variant numbers, mask detail etc
+- mutation map reader
+- min/max bp bounds for parsing
+- multi diploid estimation
+- heterozygosity for GPs
+- support for missing data (masked arrays?)
+- deal with nan values due to zero denominators in long-distance bins
+- plotting functions; and clearly delineate the difference between them
+(one plots data/model comp, with multiple stats allowed per panel: other plots
+arbitrary number of datas/models, with one stat/panel)

@@ -40,19 +40,20 @@ def compute_h2_stats(
     r_bins=None,
     bp_bins=None,
     min_bp=None,  #TODO
-    mut_map_file=None,
-    u_bar=None,
-    use_genotypes=True,
+    max_bp=None,  #TODO
+    mut_map_file=None,  #TODO
+    u_bar=None,  #TODO
     use_genotype_probs=False,
+    use_haplotypes=False,
     report=True,
     compute_denoms=True,
     stats_to_compute=None,
     pairwise=True,
     ac_filter=True,
     filtered=False,
-    haplotype_matrix=None,
     genotype_matrix=None,
     genotype_prob_matrix=None,
+    haplotype_matrix=None,
 ):
     """
     Compute H2 statistics on a chromosome or chromosome interval.
@@ -62,47 +63,78 @@ def compute_h2_stats(
     vcf_file : str, path
         Path to VCF file.
     pop_file : str, path, optional
-        Path population specification file: a whitespace-separated file with
-        two columns, headered 'sample' and 'pop', mapping VCF samples to
-        population labels.
+        Path to population specification file; a whitespace-separated file with
+        two columns, headered 'sample' and 'pop', which map VCF samples to
+        population labels. Samples in the VCF absent from ``pop_file`` are
+        ignored. If None, each VCF sample is assigned to a unique population.
     pops : list, optional
-        Populations to consider. If None (default), all populations specified
-        in ``pop_file`` are used (in the order they are loaded).
+        Populations from ``pop_file`` for which to compute H2. If None
+        (default), all populations specified in ``pop_file`` are parsed, in
+        order of first appearance.
     bed_file : str, path, optional
-        BED file specifying accessible sites; needed to ``compute_denoms``.
+        Path to BED file that specifies accessible sites; required if
+        ``compute_denoms`` is True.
     chromosome : str, optional
-        Chromosome to parse (if VCF/BED files record several chromosomes).
+        Chromosome to parse (if VCF or BED files record several chromosomes).
     interval : tuple, length 2, optional
-        BED-style (0-indexed, half-open) genomic interval to parse.
+        BED-style (0-indexed, half-open) genomic interval to parse. Sites
+        outside the interval are ignored.
     rec_map_file : str, path, optional
-        Should be whitespace-separated with columns 'Position(bp)', 'Map(cM)'.
+        Path to recombination map file. This must be whitespace-separated with
+        columns labelled 'Position(bp)', 'Map(cM)'.
     r_bins : array-like, optional
+        Bin edges, defined in recombination fractions. Required if
+        ``rec_map_file`` is not None.
     bp_bins : array-like, optional
+        Bin edges defined in physical units (base pairs).
     min_bp : int, optional
-        Minimum distance (inclusive) between sites.
+        Minimum allowable distance (inclusive) between sites. Any site pairs
+        closer together than ``min_bp`` are skipped.
+    max_bp : int, optional
+        Maximum allowable distance (exclusive) between sites.
     mut_map_file : str, path, optional
+        Path to mutation map file for weighting site contributions to H2. This
+        may be either (1) a .npy array file with site-resolution mutation
+        rates, with ``np.nan`` where data is missing, or (2) a .csv or .tsv
+        file (file separator defined by extension) with columns 'chromStart',
+        'chromEnd', and 'mutRate' that defines mutation rates on contiguous
+        intervals.
     u_bar : float, optional
-        #TODO
-    use_genotypes : bool, optional
-        If True (default), treat VCF as unphased and compute statistics from
-        genotypes. If False, treat VCF as phased and use haplotypes.
+        Factor by which to divide mutation rates in mutation rate-based
+        scaling. If None (default), the average site rate is used. #TODO correct?
     use_genotype_probs : bool, optional
         If True (default False), compute stats from genotype probabilities.
+        The default behavior is to use genotypes.
+    use_haplotypes : bool, optional
+        If True (default False), treat the input VCF as phased and apply
+        haplotype estimators of H2.
     report : bool, optional
         If True (default), print verbose status messages.
     compute_denoms : bool, optional
-        If True (default), calculate H2 and H denominators.
+        If True (default), calculate denominators for H2 and H; the numbers of
+        accessible site pairs and sites, respectively.
     stats_to_compute : tuple, length 2, optional
         Holds lists of H2 and H statistics to calculate, 'H2_{i}_{j}' and
         'H_{i}_{j}`. ``i`` and ``j`` index ``pops``. If None (default),
         compute all statistics for ``pops``.
     pairwise : bool, optional
-        #TODO implement multi-diploid estimation
+        If True, average across within and between-diploid H2 estimators. If
+        False, use ``moments.LD.Parsing`` functions to count two-locus
+        genotypes/haplotypes and apply multi-sample estimators to these.
+        Pairwise estimators must be used if H2 is estimated from genotype
+        probabilities.
     ac_filter : bool, optional
         Allele count filter. If True (default), ignore multiallelic sites.
-        #TODO should raise error if True with genotype/GP matrix.
+        Affects only the haplotype estimators; estimation with genotypes or
+        genotype probabilities always drops multiallelic sites.
     filtered : bool, optional
-        If True (default False), skip VCF rows without ``PASS`` in ``FILTER``.
+        If True (default False), skip VCF rows without 'PASS' in the 'FILTER'
+        field.
+    genotype_matrix : GenotypeMatrix.
+        Preloaded genotype matrix to parse. Ditto for ``genotype_prob_matrix``
+        and ``haplotype_matrix``. The provision of one of these overrides
+        ``use_genotype_probs`` and ``use_haplotypes``.
+        # TODO internal masking of preloaded file...
 
     Returns
     -------
@@ -110,29 +142,14 @@ def compute_h2_stats(
         A dictionary with keys 'bins', 'pops', 'stats', 'sums', 'denoms'.
     """
     # Check arguments
-    if use_genotypes and use_genotype_probs:
-        raise ValueError("cannot use_genotypes and use_genotype_probs")
+    if use_genotype_probs and use_haplotypes:
+        raise ValueError("use_genotype_probs, use_haplotypes cannot both be True")
 
     if report:
         print(timestamp(), "Preparing data ...")
 
     # Load sequence data
-    if use_genotypes:
-        if vcf_file is not None:
-            matrix = GenotypeMatrix.from_vcf(
-                vcf_file,
-                bed_file=bed_file,
-                interval=interval,
-                chromosome=chromosome,
-                pop_file=pop_file,
-                filtered=filtered,
-            )
-        else:
-            if genotype_matrix is not None:
-                matrix = genotype_matrix
-            else:
-                raise ValueError("genotype_matrix or vcf_file required")
-    elif use_genotype_probs:
+    if use_genotype_probs:
         if vcf_file is not None:
             matrix = GenotypeProbMatrix.from_vcf(
                 vcf_file,
@@ -147,7 +164,7 @@ def compute_h2_stats(
                 matrix = genotype_prob_matrix
             else:
                 raise ValueError("genotype_prob_matrix or vcf_file required")
-    else:
+    elif use_haplotypes:
         if vcf_file is not None:
             matrix = HaplotypeMatrix.from_vcf(
                 vcf_file,
@@ -163,6 +180,21 @@ def compute_h2_stats(
                 matrix = haplotype_matrix
             else:
                 raise ValueError("haplotype_matrix or vcf_file required")
+    else:
+        if vcf_file is not None:
+            matrix = GenotypeMatrix.from_vcf(
+                vcf_file,
+                bed_file=bed_file,
+                interval=interval,
+                chromosome=chromosome,
+                pop_file=pop_file,
+                filtered=filtered,
+            )
+        else:
+            if genotype_matrix is not None:
+                matrix = genotype_matrix
+            else:
+                raise ValueError("genotype_matrix or vcf_file required")
     if report:
         print(timestamp(), f"Loaded {matrix}")
 
@@ -214,8 +246,8 @@ def compute_h2_stats(
         pops=pops,
         stats_to_compute=stats_to_compute,
         pairwise=pairwise,
-        use_genotypes=use_genotypes,
-        use_genotype_probs=use_genotype_probs
+        use_genotype_probs=use_genotype_probs,
+        use_haplotypes=use_haplotypes,
     )
     if report:
         print(timestamp(), "Computed statistics.")
@@ -253,8 +285,8 @@ def _compute_h2_sums(
     stats_to_compute=None,
     pairwise=True,
     weights=None,
-    use_genotypes=True,
     use_genotype_probs=False,
+    use_haplotypes=False,
 ):
     """
     Call subordinate functions to compute H2 from preloaded data.
@@ -267,16 +299,19 @@ def _compute_h2_sums(
             pops,
             stats_to_compute,
             weights=weights,
-            use_genotypes=use_genotypes,
             use_genotype_probs=use_genotype_probs,
+            use_haplotypes=use_haplotypes,
         )
     else:
         raise ValueError("multi-diploid calculator under construction")
 
     sums_list = [s for s in sums]
-    h_sums = _compute_heterozygosity(matrix, pops, stats_to_compute,
-                                     use_genotypes=use_genotypes,
-                                     use_genotype_probs=use_genotype_probs)
+    h_sums = _compute_heterozygosity(
+        matrix,
+        pops,stats_to_compute,
+        use_genotype_probs=use_genotype_probs,
+        use_haplotypes=use_haplotypes,
+    )
     sums_list.append(h_sums)
 
     return sums_list
@@ -511,8 +546,8 @@ def _call_pairwise_h2_estimators(
     pops,
     stats_to_compute,
     weights=None,
-    use_genotypes=True,
     use_genotype_probs=False,
+    use_haplotypes=False,
     min_bp=None,
     max_bp=None,
 ):
@@ -551,22 +586,22 @@ def _call_pairwise_h2_estimators(
             denom = len(sample_idx)
             for idx in sample_idx:
                 arr = matrix.slice_sample(idx)
-                if use_genotypes:
-                    numer += _h2_geno_within_diploid(
-                        arr,
-                        coords,
-                        bins,
-                        weights=weights,
-                    )
-                elif use_genotype_probs:
+                if use_genotype_probs:
                     numer += _h2_gp_within_diploid(
                         arr,
                         coords,
                         bins,
                         weights=weights,
                     )
-                else:
+                elif use_haplotypes:
                     numer += _h2_hap_within_diploid(
+                        arr,
+                        coords,
+                        bins,
+                        weights=weights,
+                    )
+                else:
+                    numer += _h2_geno_within_diploid(
                         arr,
                         coords,
                         bins,
@@ -582,15 +617,7 @@ def _call_pairwise_h2_estimators(
                 arr1 = matrix.slice_sample(idx1)
                 for idx2 in sample_idx2:
                     arr2 = matrix.slice_sample(idx2)
-                    if use_genotypes:
-                        numer += _h2_geno_between_diploid(
-                            arr1,
-                            arr2,
-                            coords,
-                            bins,
-                            weights=weights,
-                        )
-                    elif use_genotype_probs:
+                    if use_genotype_probs:
                         numer += _h2_gp_between_diploid(
                             arr1,
                             arr2,
@@ -598,8 +625,16 @@ def _call_pairwise_h2_estimators(
                             bins,
                             weights=weights,
                         )
-                    else:
+                    elif use_haplotypes:
                         numer += _h2_hap_between_diploid(
+                            arr1,
+                            arr2,
+                            coords,
+                            bins,
+                            weights=weights,
+                        )
+                    else:
+                        numer += _h2_geno_between_diploid(
                             arr1,
                             arr2,
                             coords,
