@@ -180,7 +180,7 @@ def optimize(
         print(timestamp(), f"Fitting to observed H2 for {pops}")
         namestr = "".join([f"{n:>10}" for n in param_names])
         pstr = "".join([f"{float(p):>10.3}" for p in params_0])
-        print(f"{'Call':<5}{'LL':>10} <{namestr>]")
+        print(f"{'Call':<5}{'LL':>10} <{namestr}>")
         print(f"{'init':<5}{'-':>10} <{pstr}>")
 
     # Call the selected scipy optimization function
@@ -297,7 +297,7 @@ def _objective_func(
 
     builder = _update_builder(builder, options, params)
     graph = demes.Graph.fromdict(builder)
-    model = H2stats.from_moments(
+    model = H2stats.from_demes(
         graph,
         sampled_demes=sampled_demes,
         sample_times=sample_times,

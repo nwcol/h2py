@@ -100,7 +100,7 @@ class H2stats:
         return
 
     @classmethod
-    def from_moments(
+    def from_demes(
         cls,
         graph,
         sampled_demes=None,
@@ -113,7 +113,7 @@ class H2stats:
         method="simpsons",
     ):
         """
-        Compute expected statistics using moments.LD.
+        Compute expected statistics for a Demes model with ``moments.Demes.LD``.
 
         TODO document
         Parameters
