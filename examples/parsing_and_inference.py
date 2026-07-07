@@ -12,8 +12,8 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 50
-n_samples = 4  # per population
+n_reps = 100
+n_samples = 1 # per population
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -76,7 +76,6 @@ def write_bed_file():
 def parse_stats(rep_ii):
     sums = h2py.parsing.compute_h2_stats(
         vcf_file=f"data/split_mig.{rep_ii}.vcf",
-        use_genotypes=True,
         pop_file=pop_file,
         bed_file=bed_file,
         rec_map_file=rec_map_file,
@@ -94,10 +93,13 @@ if __name__ == "__main__":
     run_msprime(g)
     sums = {i: parse_stats(i) for i in range(n_reps)}
     boot_data = h2py.parsing.bootstrap_data(sums)
-    model = h2py.H2stats.from_moments(g, sampled_demes=["pop0", "pop1"], u=u, r_bins=r_bins, phased=False)
+    model = h2py.H2stats.from_demes(
+        g, sampled_demes=["pop0", "pop1"], u=u, r_bins=r_bins, phased=False)
     h2py.plotting.plot_h2_curves_comp(
         model,
         boot_data["means"],
         boot_data["varcovs"],
         r_bins=boot_data["bins"])
+    print(model.data[-1], boot_data["means"][-1])
+
 

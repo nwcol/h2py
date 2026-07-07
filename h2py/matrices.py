@@ -46,6 +46,9 @@ class HaplotypeMatrix:
         return (f"HaplotypeMatrix({self.haplotypes}, "
                 f"{self.positions}, {self.pop_map})")
 
+    def __len__(self):
+        return len(self.haplotypes)
+
     @property
     def shape(self):
         return self.haplotypes.shape
@@ -149,6 +152,9 @@ class GenotypeMatrix():
         return (f"GenotypeMatrix({self.genotypes}, {self.positions}, "
                 f"{self.pop_map}")
 
+    def __len__(self):
+        return len(self.genotypes)
+
     @property
     def shape(self):
         return self.genotypes.shape
@@ -246,6 +252,10 @@ class GenotypeProbMatrix():
     def __repr__(self):
         return (f"GenotypeProbMatrix({self.genotype_probs}, "
                 f"{self.positions}, {self.pop_map})")
+
+    def __len__(self):
+        """Number of sites; redundant with ``self.n_sites``."""
+        return len(self.genotype_probs)
 
     @property
     def shape(self):

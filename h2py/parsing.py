@@ -143,12 +143,40 @@ def compute_h2_stats(
     """
     # Check arguments
     if use_genotype_probs and use_haplotypes:
-        raise ValueError("use_genotype_probs, use_haplotypes cannot both be True")
+        raise ValueError(
+            "`use_genotype_probs`, `use_haplotypes` cannot both be True")
+
+    # Check matrix types and override `use_genotype_probs`, `use_haplotypes`
+    preloaded = False
+    if genotype_matrix is not None:
+        assert isinstance(genotype_matrix, GenotypeMatrix)
+        if haplotype_matrix is not None or genotype_prob_matrix is not None:
+            raise ValueError("only one `matrix` instance is allowed")
+        use_genotype_probs = use_haplotypes = False
+        preloaded = True
+    elif genotype_prob_matrix is not None:
+        assert isinstance(genotype_prob_matrix, GenotypeProbMatrix)
+        if haplotype_matrix is not None:
+            raise ValueError("only one `matrix` instance is allowed")
+        use_genotype_probs = True
+        use_haplotypes = False
+        preloaded = True
+    elif haplotype_matrix is not None:
+        assert isinstance(haplotype_matrix, HaplotypeMatrix)
+        use_genotype_probs = False
+        use_haplotypes = True
+        preloaded = True
+    else:
+        if vcf_file is None:
+            raise ValueError("`vcf_file` or preloaded matrix is required")
+
+    if vcf_file is not None and preloaded:
+        raise ValueError("cannot use both `vcf_file` and preloaded matrix")
 
     if report:
         print(timestamp(), "Preparing data ...")
 
-    # Load sequence data
+    # Genotype probability path
     if use_genotype_probs:
         if vcf_file is not None:
             matrix = GenotypeProbMatrix.from_vcf(
@@ -160,10 +188,8 @@ def compute_h2_stats(
                 filtered=filtered,
             )
         else:
-            if genotype_prob_matrix is not None:
-                matrix = genotype_prob_matrix
-            else:
-                raise ValueError("genotype_prob_matrix or vcf_file required")
+            matrix = genotype_prob_matrix
+    # Haplotype path
     elif use_haplotypes:
         if vcf_file is not None:
             matrix = HaplotypeMatrix.from_vcf(
@@ -176,10 +202,8 @@ def compute_h2_stats(
                 filtered=filtered,
             )
         else:
-            if haplotype_matrix is not None:
-                matrix = haplotype_matrix
-            else:
-                raise ValueError("haplotype_matrix or vcf_file required")
+            matrix = haplotype_matrix
+    # Genotype path (default)
     else:
         if vcf_file is not None:
             matrix = GenotypeMatrix.from_vcf(
@@ -191,12 +215,9 @@ def compute_h2_stats(
                 filtered=filtered,
             )
         else:
-            if genotype_matrix is not None:
-                matrix = genotype_matrix
-            else:
-                raise ValueError("genotype_matrix or vcf_file required")
+            matrix = genotype_matrix
     if report:
-        print(timestamp(), f"Loaded {matrix}")
+        print(timestamp(), f"Prepared {matrix}")
 
     # Load recombination map data and check bins
     if r_bins is not None:
@@ -228,7 +249,6 @@ def compute_h2_stats(
     else:
         weights = None
 
-    # Compute statistics
     if pops is None:
         pops = matrix.pops
 
@@ -238,17 +258,25 @@ def compute_h2_stats(
 
     if report:
         print(timestamp(), "Computing statistics ...")
-    sums_list = _compute_h2_sums(
+
+    if pairwise:
+        _compute_func = _call_pairwise_h2_estimators
+    else:
+        _compute_func = _call_multi_sample_h2_estimators
+
+    sums_list = _compute_func(
         matrix,
         coords,
         bins,
+        pops,
+        stats_to_compute,
         weights=weights,
-        pops=pops,
-        stats_to_compute=stats_to_compute,
-        pairwise=pairwise,
         use_genotype_probs=use_genotype_probs,
         use_haplotypes=use_haplotypes,
+        min_bp=min_bp,
+        max_bp=max_bp,
     )
+
     if report:
         print(timestamp(), "Computed statistics.")
 
@@ -256,6 +284,7 @@ def compute_h2_stats(
     if compute_denoms:
         if report:
             print(timestamp(), "Computing denominators ...")
+
         denoms = compute_h2_denoms(
             bed_file=bed_file,
             rec_map_file=rec_map_file,
@@ -263,6 +292,7 @@ def compute_h2_stats(
             bp_bins=bp_bins,
             interval=interval
         )
+
         if report:
             print(timestamp(), "Computed denominators.")
     else:
@@ -277,59 +307,19 @@ def compute_h2_stats(
             "sums": sums_list, "denoms": denoms}
 
 
-def _compute_h2_sums(
-    matrix,
-    coords,
-    bins,
-    pops=None,
-    stats_to_compute=None,
-    pairwise=True,
-    weights=None,
-    use_genotype_probs=False,
-    use_haplotypes=False,
-):
-    """
-    Call subordinate functions to compute H2 from preloaded data.
-    """
-    if pairwise:
-        sums = _call_pairwise_h2_estimators(
-            matrix,
-            coords,
-            bins,
-            pops,
-            stats_to_compute,
-            weights=weights,
-            use_genotype_probs=use_genotype_probs,
-            use_haplotypes=use_haplotypes,
-        )
-    else:
-        raise ValueError("multi-diploid calculator under construction")
-
-    sums_list = [s for s in sums]
-    h_sums = _compute_heterozygosity(
-        matrix,
-        pops,stats_to_compute,
-        use_genotype_probs=use_genotype_probs,
-        use_haplotypes=use_haplotypes,
-    )
-    sums_list.append(h_sums)
-
-    return sums_list
-
-
 def compute_h2_denoms(
     bed_file=None,
     rec_map_file=None,
     r_bins=None,
     bp_bins=None,
     interval=None,
-    ):
+):
     """
     Compute the denominator of the H2 statistic- the number of pairs of
-    accessible sites, binned by the distances between them.
+    accessible sites, binned by distance.
 
     The last element of the denominator array holds the denominator of the
-    heterozygosity statistic, which is the number of accessible sites.
+    heterozygosity statistic, the number of accessible sites.
 
     Parameters
     ----------
@@ -355,23 +345,28 @@ def compute_h2_denoms(
     return denoms
 
 
-def _compute_h2_denoms(coords, bins, pos=None, min_bp=None, max_bp=None):
-    """Compute binned denominator for two-locus statistics"""
-    binned_denoms = np.zeros(len(bins) - 1, dtype=np.float64)
-    # Indices (inclusive) of lowest-indexed sites in the zeroth bin
-    lower_sites = np.maximum(np.searchsorted(coords, coords + bins[0]),
-                             np.arange(1, len(coords) + 1))
-    for ii, upper_edge in enumerate(bins[1:]):
-        # Indices (exclusive) of highest-indexed sites in bin `ii`
-        upper_sites = np.searchsorted(coords, coords + upper_edge)
-        binned_denoms[ii] = np.sum(upper_sites - lower_sites)
-        lower_sites = upper_sites
-    return binned_denoms
+# =============================================================================
+# Boostrap/subset functions
+# =============================================================================
 
 
-# =============================================================================
-# Functions for averaging/bootstrapping across genomic intervals
-# =============================================================================
+def bootstrap_data(all_data):
+    """
+    Compute a variance/covariance matrix across H2 statistics for each bin,
+    by bootstrapping across sums of the statistic precomputed on genomic
+    intervals.
+    """
+    # Check to make sure the variance/covariance matrix can be computed
+
+    labels = list(all_data.keys())
+    means = get_means_across_regions(all_data)
+    bootstrap_means = _get_bootstrap_replicates(all_data)
+    reshaped_means = [[m[i] for m in bootstrap_means]
+                       for i in range(len(means))]
+    varcovs = [np.cov(np.array(m).T) for m in reshaped_means]
+    template = all_data[labels[0]]
+    return {"pops": template["pops"], "stats": template["stats"],
+            "bins": template["bins"], "means": means, "varcovs": varcovs}
 
 
 def get_means_across_regions(all_data):
@@ -398,7 +393,53 @@ def get_means_across_regions(all_data):
     return means
 
 
-def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
+def subset_data(data, to_pops=None, min_r=None, max_r=None):
+    """
+    Subset a dictionary of statistics to given populations/bins.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+    means = data["means"]
+    varcovs = data["varcovs"]
+
+    if to_pops is not None:
+        means = _subset_means(means, data["pops"], to_pops)
+        varcovs = _subset_varcovs(varcovs, data["pops"], to_pops)
+        pops = to_pops
+        n_pops = len(pops)
+        stats = [_h2_names(n_pops), _h_names(n_pops)]
+    else:
+        pops = data["pops"]
+        stats = data["stats"]
+
+    bins = []
+    new_means = []
+    new_varcovs = []
+    for ii, b in enumerate(data["bins"]):
+        if min_r is not None:
+            if b[0] < min_r:
+                continue
+        if max_r is not None:
+            if b[1] > max_r:
+                continue
+        bins.append(b)
+        new_means.append(means[ii])
+        new_varcovs.append(varcovs[ii])
+
+    return {"pops": pops, "stats": stats, "bins": bins, "means": new_means,
+            "varcovs": new_varcovs}
+
+
+# -----------------------------------------------------------------------------
+# Bootstrap utility functions
+# -----------------------------------------------------------------------------
+
+
+def _get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
     """
     Draw several bootstrap replicates from a list of sums computed on genomic
     intervals.
@@ -436,75 +477,6 @@ def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
     return all_means
 
 
-def bootstrap_data(all_data):
-    """
-    Compute a variance/covariance matrix across H2 statistics for each bin,
-    by bootstrapping across sums of the statistic precomputed on genomic
-    intervals.
-    """
-    # Check to make sure the variance/covariance matrix can be computed
-
-    labels = list(all_data.keys())
-    means = get_means_across_regions(all_data)
-    bootstrap_means = get_bootstrap_replicates(all_data)
-    reshaped_means = [[m[i] for m in bootstrap_means]
-                       for i in range(len(means))]
-    varcovs = [np.cov(np.array(m).T) for m in reshaped_means]
-    data = dict()
-    data["pops"] = all_data[labels[0]]["pops"]
-    data["stats"] = all_data[labels[0]]["stats"]
-    data["bins"] = all_data[labels[0]]["bins"]
-    data["means"] = means
-    data["varcovs"] = varcovs
-    return data
-
-
-def subset_data(data, to_pops=None, r_min=None, r_max=None):
-    """
-    Subset a dictionary of statistics to given populations/bins.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-    """
-    means = data["means"]
-    varcovs = data["varcovs"]
-
-    if to_pops is not None:
-        means = _subset_means(means, data["pops"], to_pops)
-        varcovs = _subset_varcovs(varcovs, data["pops"], to_pops)
-        pops = to_pops
-        n_pops = len(pops)
-        stats = [_h2_names(n_pops), _h_names(n_pops)]
-    else:
-        pops = data["pops"]
-        stats = data["stats"]
-
-    bins = []
-    new_means = []
-    new_varcovs = []
-    for ii, b in enumerate(data["bins"]):
-        if r_min is not None:
-            if b[0] < r_min:
-                continue
-        if r_max is not None:
-            if b[1] > r_max:
-                continue
-        bins.append(b)
-        new_means.append(means[ii])
-        new_varcovs.append(varcovs[ii])
-
-    data_out = dict()
-    data_out["pops"] = pops
-    data_out["stats"] = stats
-    data_out["bins"] = bins
-    data_out["means"] = new_means
-    data_out["varcovs"] = new_varcovs
-    return data_out
-
-
 def _subset_means(means, pops, to_pops):
     """Extract the subset of means that pertain to populations in `to_pops`"""
     stats = _h2_names(len(pops))
@@ -535,7 +507,72 @@ def _subset_varcovs(varcovs, pops, to_pops):
 
 
 # -----------------------------------------------------------------------------
-# 'Pairwise' H2 estimators operate on single diploids or pairs of diploids.
+# Vectorized denominator calculation
+# -----------------------------------------------------------------------------
+
+
+def _compute_h2_denoms(
+    coords,
+    bins,
+    pos=None,
+    min_bp=None,
+    max_bp=None
+):
+    """Compute binned denominators for two-locus statistics and H.
+
+    Parameters
+    ----------
+    coords : np.ndarray, shape (n_pos,)
+        Coordinates of accessible base pairs, in genetic map (Morgans, M) or
+        physical (base pairs, bp) distances.
+    bins : array-like, shape (n_bins + 1,)
+        Bin edges, in genetic map units (M) or physical distances (bp)
+        matching ``coords``.
+    pos : np.ndarray, optional, shape (n_pos,)
+        Physical positions of sites represented in ``coords``. Required to
+        impose minimum/maximum physical distances.
+    min_bp : int, optional
+        Minimum physical distance between sites, in base pairs.
+    max_bp : int, optional
+        Maximum physical distance between sites, in base pars.
+
+    Returns
+    -------
+    binned_denoms : np.ndarray, shape (n_bins + 1,)
+        Distance-binned tallies of accessible site pairs. The last element is
+        the number of accessible sites.
+    """
+    binned_denoms = np.zeros(len(bins), dtype=np.float64)
+
+    # Precompute bounds due to min/max physical distances
+    if min_bp is not None and min_bp > 1:
+        min_idx = np.searchsorted(pos, pos + min_bp)
+    else:
+        min_idx = np.arange(1, len(coords) + 1)
+    if max_bp is not None:
+        max_idx = np.searchsorted(pos, pos + max_bp)
+    else:
+        max_idx = None
+
+    # Get indices of lowest-index right loci in the zeroth bin
+    lower_idx = np.maximum(np.searchsorted(coords, coords + bins[0]), min_idx)
+
+    for ii, upper_edge in enumerate(bins[1:]):
+        # Get indices (exclusive) of highest-index right loci in bin ``ii``
+        upper_idx = np.searchsorted(coords, coords + upper_edge)
+        if max_idx is not None:
+            upper_idx = np.minimum(upper_idx, max_idx)
+        binned_denoms[ii] = np.sum(upper_idx - lower_idx)
+        lower_idx = upper_idx
+
+    # The number of accessible sites, for normalizing heterozygosity
+    binned_denoms[-1] = len(coords)
+
+    return binned_denoms
+
+
+# -----------------------------------------------------------------------------
+# Pairwise H2 estimators. These take diploid genotype/haplotype/GP arrays.
 # -----------------------------------------------------------------------------
 
 
@@ -557,13 +594,6 @@ def _call_pairwise_h2_estimators(
 
     Parameters
     ----------
-    matrix : HaplotypeMatrix, GenotypeMatrix, or GPMatrix
-    coords : np.ndarray
-        Shape (n_sites).
-    bins : np.ndarray
-        Shape (n_bins + 1). Defines bin edges, in the same unit as `coords`.
-    weights : np.ndarray, optional
-        Shape (n_sites). Specifies relative weights for each site.
 
     Returns
     -------
@@ -579,7 +609,7 @@ def _call_pairwise_h2_estimators(
         parts = stat.split("_")
         pop_idx = [int(x) for x in parts[1:]]
 
-        # Within-population path
+        # Within-population path: average over within-diploid estimators
         if pop_idx[0] == pop_idx[1]:
             sample_idx = matrix.pop_map[pops[pop_idx[0]]]
             numer = np.zeros(n_bins, dtype=np.float64)
@@ -607,7 +637,7 @@ def _call_pairwise_h2_estimators(
                         bins,
                         weights=weights,
                     )
-        # Between-population path
+        # Between-population path: average over between-diploid estimators
         else:
             sample_idx1 = matrix.pop_map[pops[pop_idx[0]]]
             sample_idx2 = matrix.pop_map[pops[pop_idx[1]]]
@@ -644,7 +674,20 @@ def _call_pairwise_h2_estimators(
 
         result[:, stat_idx] = numer / denom
 
-    return result
+    # Transform the output array into a list, with one element for each bin
+    sums_list = [s for s in result]
+
+    # Compute the heterozygosity
+    h_sums = _compute_heterozygosity(
+        matrix,
+        pops,
+        stats_to_compute,
+        use_genotype_probs=use_genotype_probs,
+        use_haplotypes=use_haplotypes,
+    )
+    sums_list.append(h_sums)
+
+    return sums_list
 
 
 # Pairwise estimators operate on bare numpy arrays.
@@ -681,13 +724,13 @@ def _h2_geno_within_diploid(gt, coords, bins, weights=None):
 
 def _h2_geno_between_diploid(gt1, gt2, coords, bins, weights=None):
     """Compute between-diploid H2 from genotype data."""
-    p_A_1 = gt1 / 2
-    p_a_1 = 1 - p_A_1
-    p_A_2 = gt2 / 2
-    p_a_2 = 1 - p_A_2
-    p_diff = p_A_1 * p_a_2 + p_A_2 * p_a_1
+    p_alt1 = gt1 / 2
+    p_ref1 = 1 - p_alt1
+    p_alt2 = gt2 / 2
+    p_ref2 = 1 - p_alt2
+    p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
     if weights is not None:
-        p_diff = weights * pi_12
+        p_diff = weights * pi_diff
     return _compute_binned_sums(p_diff, coords, bins)
 
 
@@ -701,24 +744,13 @@ def _h2_gp_within_diploid(gp, coords, bins, weights=None):
 
 def _h2_gp_between_diploid(gp1, gp2, coords, bins, weights=None):
     """Compute between-diploid H2 from genotype probabilities."""
-    p_a_1 = gp1[:, 0] + gp1[:, 1] / 2
-    p_A_1 = gp1[:, 1] / 2 + gp1[:, 2]
-    p_a_2 = gp2[:, 0] + gp2[:, 1] / 2
-    p_A_2 = gp2[:, 1] / 2 + gp2[:, 2]
-    p_diff = p_A_1 * p_a_2 + p_A_2 * p_a_1
-    #p_aa_1, p_aA_1, p_AA_1 = gp1.T
-    #p_aa_2, p_aA_2, p_AA_2 = gp2.T
-    #pi_12 = (
-    #    0.5 * p_aa_1 * p_aA_2
-    #    + p_aa_1 * p_AA_2
-    #    + 0.5 * p_aA_1 * p_aa_2
-    #    + 0.5 * p_aA_1 * p_aA_2
-    #    + 0.5 * p_aA_1 * p_AA_2
-    #    + p_AA_1 * p_aa_2
-    #    + 0.5 * p_AA_1 * p_aA_2
-    #)
+    p_alt1 = gp1[:, 1] / 2 + gp1[:, 2]
+    p_ref1 = 1 - p_alt1
+    p_alt2 = gp1[:, 1] / 2 + gp2[:, 2]
+    p_ref2 = 1 - p_alt2
+    p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
     if weights is not None:
-        p_diff = weights * pi_12
+        p_diff = weights * pi_diff
     return _compute_binned_sums(p_diff, coords, bins)
 
 
@@ -752,30 +784,25 @@ def _compute_binned_sums(site_vals, coords, bins):
 
 
 # -----------------------------------------------------------------------------
-# Multi-sample estimators- these take precomputed genotype/haplotype counts
+# Multi-sample H2 estimators. These take precomputed two-locus type counts.
 # -----------------------------------------------------------------------------
 
 
-def _compute_multi_diploid_h2(
+def _call_multi_sample_h2_estimators(
     matrix,
-    pops,
-    stats_to_compute,
     coords,
     bins,
-    weights=None,
-    use_genotypes=True,
+    pops,
+    stats_to_compute,
+    weights,
     use_genotype_probs=False,
+    use_haplotypes=False,
+    min_bp=min_bp,
+    max_bp=max_bp,
 ):
-    """
-    Compute H2 sums by counting two-locus genotypes/haplotypes and applying
-    multi-sample estimators.
-    """
-
-    return
-
-
-def _call_multi_diploid_estimator():
-
+    """Calculate H2 by counting types and applying multi-sample estimators."""
+    if use_genotype_probs:
+        raise ValueError("multi sample GP estimation is not implemented yet")
     return
 
 
@@ -803,37 +830,9 @@ def _h2_geno_within_pop(pop_counts):
     """
     Compute within-population H2 from an array of two-locus genotype counts.
     """
-    n1, n2, n3, n4, n5, n6, n7, n8, n9 = pop_counts.T
+    n5 = pop_counts[:, 4]
     n = np.sum(pop_counts, axis=1)
-    numer = (
-        n1*n5
-        + 2*n1*n6
-        + 2*n1*n8
-        + 4*n1*n9
-        + n2*n4
-        + n2*n5
-        + n2*n6
-        + 2*n2*n7
-        + 2*n2*n8
-        + 2*n2*n9
-        + 2*n3*n4
-        + n3*n5
-        + 4*n3*n7
-        + 2*n3*n8
-        + n4*n5
-        + 2*n4*n6
-        + n4*n8
-        + 2*n4*n9
-        + 0.5*n5*(n5+1)
-        + n5*n6
-        + n5*n7
-        + n5*n8
-        + n5*n9
-        + 2*n6*n7
-        + n6*n8
-    )
-    denom = n * (2 * n - 1)
-    return numer / denom
+    return n5 / n
 
 
 def _h2_geno_between_pop(pop1_counts, pop2_counts):
@@ -844,12 +843,10 @@ def _h2_geno_between_pop(pop1_counts, pop2_counts):
     n21, n22, n23, n24, n25, n26, n27, n28, n29 = pop2_counts.T
     n1 = np.sum(pop1_counts, axis=1)
     n2 = np.sum(pop2_counts, axis=1)
-    numer = (
-        (n11 + n12/2 + n14/2 + n15/4) * (n25/4 + n26/2 + n28/2 + n29)
-        + (n15/4 + n16/2 + n18/2 + n19) * (n21 + n22/2 + n24/2 + n25/4)
-        + (n12/2 + n13 + n15/4 + n16/2) * (n24/2 + n25/4 + n27 + n28/2)
-        + (n14/2 + n15/4 + n17 + n18/2) * (n22/2 + n23 + n25/4 + n26/2)
-    )
+    numer = ((n11 + n12/2 + n14/2 + n15/4) * (n25/4 + n26/2 + n28/2 + n29)
+              + (n15/4 + n16/2 + n18/2 + n19) * (n21 + n22/2 + n24/2 + n25/4)
+              + (n12/2 + n13 + n15/4 + n16/2) * (n24/2 + n25/4 + n27 + n28/2)
+              + (n14/2 + n15/4 + n17 + n18/2) * (n22/2 + n23 + n25/4 + n26/2))
     denom = n1 * n2
     return numer / denom
 
@@ -863,48 +860,43 @@ def _compute_heterozygosity(
     matrix,
     pops,
     stats_to_compute,
-    use_genotypes=True,
     use_genotype_probs=False,
+    use_haplotypes=False,
 ):
     """Calculate H statistics. Strictly for biallelic matrices."""
     if use_genotype_probs:
-        result = _compute_heterozygosity_gp(matrix, pops, stats_to_compute)
-        return result
-
-    hap_counts = []
-    ref_counts = []
-    alt_counts = []
-
-    for pop in pops:
-        mat = matrix.slice_pop(pop)
-        n_alt = np.sum(mat, axis=1)
-        if use_genotypes:
-            n_hap = np.full_like(n_alt, 2 * mat.shape[1])
-        else:
-            n_hap = np.full_like(n_alt, mat.shape[1])
-        n_ref = n_hap - n_alt
-        hap_counts.append(n_hap)
-        ref_counts.append(n_ref)
-        alt_counts.append(n_alt)
+        return _compute_gp_heterozygosity(matrix, pops, stats_to_compute)
 
     h_stats_to_compute = stats_to_compute[1]
     n_stats = len(h_stats_to_compute)
     result = np.zeros(n_stats, dtype=np.float64)
 
+    # Precompute haplotype/reference allele counts
+    hap_counts = []
+    alt_counts = []
+    for pop in pops:
+        mat = matrix.slice_pop(pop)
+        n_alt = np.sum(mat, axis=1)
+        if use_haplotypes:
+            n_hap = np.full_like(n_alt, mat.shape[1])
+        else:
+            n_hap = np.full_like(n_alt, 2 * mat.shape[1])
+        hap_counts.append(n_hap)
+        alt_counts.append(n_alt)
+
     for stat_idx, stat in enumerate(h_stats_to_compute):
         parts = stat.split("_")
         pop_idx = [int(x) for x in parts[1:]]
         n_hap1 = hap_counts[pop_idx[0]]
-        n_ref1 = ref_counts[pop_idx[0]]
         n_alt1 = alt_counts[pop_idx[0]]
+        # within-population
         if pop_idx[0] == pop_idx[1]:
-            numer = 2 * n_alt1 * n_ref1
+            numer = 2 * n_alt1 * (n_hap1 - n_alt1)
             denom = n_hap1 * (n_hap1 - 1)
         else:
             n_hap2 = hap_counts[pop_idx[1]]
-            n_ref2 = ref_counts[pop_idx[1]]
             n_alt2 = alt_counts[pop_idx[1]]
-            numer = n_ref1 * n_alt2 + n_ref2 * n_alt1
+            numer = n_alt2 * (n_hap1 - n_alt1) + n_alt1 * (n_hap2 - n_alt2)
             denom = n_hap1 * n_hap2
         # Take the sum over site heterozygosities
         result[stat_idx] = np.sum(numer / denom)
@@ -912,11 +904,47 @@ def _compute_heterozygosity(
     return result
 
 
-def _compute_heterozygosity_gp(matrix, pops, stats_to_compute):
+def _compute_gp_heterozygosity(matrix, pops, stats_to_compute):
     """Compute H from genotype probabilities."""
     h_stats_to_compute = stats_to_compute[1]
     n_stats = len(h_stats_to_compute)
     result = np.zeros(n_stats, dtype=np.float64)
+
+    # Precompute alternate allele probabilities
+    n_sites = len(matrix)
+    n_pops = len(pops)
+    p_alt_matrix = np.zeros((n_sites, n_pops), dtype=np.float64)
+    for idx, pop in enumerate(pops):
+        pop_matrix = matrix.slice_pop(pop)
+        n_samples = len(matrix.pop_map[pop])
+        # Get the prob. of sampling the alternate allele for each sample
+        p_alts = (0.5 * pop_matrix[:, 1::3] + pop_matrix[:, 2::3])
+        p_alt_matrix[:, idx] = np.sum(p_alts, axis=1) / n_samples
+
+    for stat_idx, stat in enumerate(h_stats_to_compute):
+        parts = stat.split("_")
+        pop_idx = [int(x) for x in parts[1:]]
+
+        # Within-population path. Average over probabilities of heterozygosity
+        # for each diploid.
+        if pop_idx[0] == pop_idx[1]:
+            sample_idx = matrix.pop_map[pops[pop_idx[0]]]
+            numer = 0.0
+            denom = len(sample_idx)
+            for idx in sample_idx:
+                m = matrix.slice_sample(idx)
+                p_het = m[:, 1]
+                numer += np.sum(p_het)
+            result[stat_idx] = numer / denom
+        # Between-population path. Use precomputed alternate allele probs
+        else:
+            p_alt1 = p_alt_matrix[:, pop_idx[0]]
+            p_ref1 = 1 - p_alt1
+            p_alt2 = p_alt_matrix[:, pop_idx[1]]
+            p_ref2 = 1 - p_alt2
+            p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
+            result[stat_idx] = np.sum(p_diff)
+
     return result
 
 
@@ -926,7 +954,7 @@ def _compute_heterozygosity_gp(matrix, pops, stats_to_compute):
 
 
 def _get_bin_tuples(bins):
-    """Get a list of 2-tuples with bin edges from a vector of bin edges"""
+    """Get a list of 2-tuples with bin edges from a vector of bin edges."""
     unfolded_bins = []
     for ii in range(len(bins) - 1):
         unfolded_bins.append((float(bins[ii]), float(bins[ii + 1])))

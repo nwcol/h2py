@@ -1,12 +1,41 @@
-- masking and GP array coverage.
-- make the denominator calculator use a mask prepared in the main compute_h2_stats fxn.
-- parsing verbosity: spit out interval, variant numbers, mask detail etc
-- mutation map reader
-- min/max bp bounds for parsing
-- multi diploid estimation
-- heterozygosity for GPs
-- support for missing data (masked arrays?)
-- deal with nan values due to zero denominators in long-distance bins
-- plotting functions; and clearly delineate the difference between them
-(one plots data/model comp, with multiple stats allowed per panel: other plots
-arbitrary number of datas/models, with one stat/panel)
+Parsing
+- computing heterozygosity from genotype probs
+- insure the pairwise/multi-sample between-diploid estimators are equivalent
+to numerical accuracy
+- is it more efficient to calculate between-diploid GP H2 with allele probs
+than with genotype probs? Less terms...
+- integrating GP array coverage with mask/interval when parsing with GPs
+(reorganize denominator computation). What is the best way to deal with the
+likely different coverages among samples?
+- load denominator computation objects inside the main parsing function rather
+than in the lower-level function.
+- add verbosity about mask coverage and denominator computation (number of site
+pairs, number of sites, map range)
+- use GeneticMask objects in parsing
+- non-destructive masking of variation matrices
+- mutation map reader and scaling.
+- add min/max physical distance args to parsing functions and implemnent them
+into the pair-counting engines.
+- is it more efficient to use moments counting functions than to write my own?
+probably.
+- implement multi-sample estimators.
+- deal with possible nan values due to 0 denominators in long-range bins by
+adding a "safe divison" function (for computing means)
+
+Plotting
+- document/delineate clearly between the single and arbitrary comparison
+plotting funcs
+- refine single-comparison plotting function
+- write arbitrary-comparison plotting function
+
+Simulations
+- what's the best way to estimate genotype priors from data?
+    - how much does this affect estimated H2?
+- more realistic read sampling may be possible with an efficient algorithm...
+
+Tests
+
+Examples/notebooks
+- genotype parsing/bootstrapping/inference/uncerts example
+- GP example with analogous pipeline and same model/params; with --depth param
+- multi-sample GP example?

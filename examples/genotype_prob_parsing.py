@@ -15,7 +15,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 50
+n_reps = 100
 n_samples = 1  # per population
 u = 1.5e-8
 r = 1e-8
@@ -51,7 +51,6 @@ def run_sim(g):
     gp = h2py.GenotypeProbMatrix.from_tree_sequence(ts, samples, depth=30)
     sums = h2py.parsing.compute_h2_stats(
         genotype_prob_matrix=gp,
-        use_genotypes=False,
         use_genotype_probs=True,
         pop_file=pop_file,
         bed_file=bed_file,
@@ -89,11 +88,14 @@ if __name__ == "__main__":
     g = demographic_model()
     sums = {i: run_sim(g) for i in range(n_reps)}
     boot_data = h2py.parsing.bootstrap_data(sums)
-    model = h2py.H2stats.from_moments(g, sampled_demes=["pop0", "pop1"], u=u,
+    model = h2py.H2stats.from_demes(g, sampled_demes=["pop0", "pop1"], u=u,
                                       r_bins=r_bins)
     h2py.plotting.plot_h2_curves_comp(
         model,
         boot_data["means"],
         boot_data["varcovs"],
         r_bins=boot_data["bins"])
+
+    print(boot_data["means"][-1])
+    print(model.data[-1])
 
