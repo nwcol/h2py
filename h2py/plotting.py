@@ -1,4 +1,5 @@
 """
+Plot observed and expected H2.
 
 plan: two primary functions.
 - plot several models/data: one statistic per axis

@@ -1,10 +1,11 @@
 """
-Estimation of H2 from sequence data.
+Estimate H2 from sequence data.
 
 Usage
 -----
 import h2py
-intervals = [[1_000_000*i, 1_000_000*(i+1) for i in range(100)]]
+L = 100_000_000
+intervals = [[1_000_000 * i, 1_000_000 * (i + 1) for i in range(int(L / 1e6))]]
 sums = {i: h2py.parsing.compute_h2_stats(
               vcf_file="example.vcf.gz",
               pop_file="pops.txt",
@@ -389,7 +390,7 @@ def get_means_across_regions(all_data):
         for ii in range(len(numers)):
             numers[ii] += all_data[label]["sums"][ii]
             denoms[ii] += all_data[label]["denoms"][ii]
-    means = [n / d for n, d in zip(numers, denoms)]
+    means = [_safe_divide(n, d) for n, d in zip(numers, denoms)]
     return means
 
 
@@ -504,6 +505,16 @@ def _subset_varcovs(varcovs, pops, to_pops):
     mesh = np.ix_(keep, keep)
     new_varcovs = [v[mesh] for v in varcovs]
     return new_varcovs
+
+
+def _safe_divide(numer, denom):
+    """
+    Perform element-wise division, skipping elements where ``denom`` is 0.
+    """
+    valid = denom > 0.0
+    result = np.zeros(len(numer), dtype=np.float64)
+    result[valid] = numer[valid] / denom[valid]
+    return result
 
 
 # -----------------------------------------------------------------------------
@@ -797,8 +808,8 @@ def _call_multi_sample_h2_estimators(
     weights,
     use_genotype_probs=False,
     use_haplotypes=False,
-    min_bp=min_bp,
-    max_bp=max_bp,
+    min_bp=None,
+    max_bp=None,
 ):
     """Calculate H2 by counting types and applying multi-sample estimators."""
     if use_genotype_probs:

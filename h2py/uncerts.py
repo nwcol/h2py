@@ -1,5 +1,5 @@
 """
-Tools to compute confidence intervals for inferred parameters.
+Compute uncertainty in expected parameters.
 """
 
 import numpy as np

@@ -1,3 +1,5 @@
 h2py.egg-info/
 h2py/__pycache__/
 temp_examples/
+notebooks/
+examples/data/

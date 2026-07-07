@@ -1,5 +1,5 @@
 """
-Assorted utilities.
+Diverse utilities.
 """
 
 from datetime import datetime
