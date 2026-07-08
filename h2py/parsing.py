@@ -177,12 +177,19 @@ def compute_h2_stats(
     if report:
         print(timestamp(), "Preparing data ...")
 
+    # Load BED file
+    if bed_file is not None:
+        mask = GeneticMask.from_bed_file(bed_file, interval=interval)
+    else:
+        # TODO downstream implications?
+        mask = None
+
     # Genotype probability path
     if use_genotype_probs:
         if vcf_file is not None:
             matrix = GenotypeProbMatrix.from_vcf(
                 vcf_file,
-                bed_file=bed_file,
+                mask=mask,
                 interval=interval,
                 chromosome=chromosome,
                 pop_file=pop_file,
@@ -190,12 +197,13 @@ def compute_h2_stats(
             )
         else:
             matrix = genotype_prob_matrix
+            matrix.apply_mask(mask)
     # Haplotype path
     elif use_haplotypes:
         if vcf_file is not None:
             matrix = HaplotypeMatrix.from_vcf(
                 vcf_file,
-                bed_file=bed_file,
+                mask=mask,
                 interval=interval,
                 chromosome=chromosome,
                 pop_file=pop_file,
@@ -203,13 +211,14 @@ def compute_h2_stats(
                 filtered=filtered,
             )
         else:
+            # TODO masking
             matrix = haplotype_matrix
     # Genotype path (default)
     else:
         if vcf_file is not None:
             matrix = GenotypeMatrix.from_vcf(
                 vcf_file,
-                bed_file=bed_file,
+                mask=mask,
                 interval=interval,
                 chromosome=chromosome,
                 pop_file=pop_file,
@@ -286,13 +295,24 @@ def compute_h2_stats(
         if report:
             print(timestamp(), "Computing denominators ...")
 
-        denoms = compute_h2_denoms(
-            bed_file=bed_file,
-            rec_map_file=rec_map_file,
-            r_bins=r_bins,
-            bp_bins=bp_bins,
-            interval=interval
-        )
+        if use_genotype_probs:
+            denoms = _compute_h2_gp_denoms(
+                matrix,
+                coords,
+                bins,
+                pops,
+                stats_to_compute,
+                min_bp=min_bp,
+                max_bp=max_bp,
+            )
+        else:
+            denoms = _compute_h2_denoms(
+                coords,
+                bins,
+                pos=pos,
+                min_bp=min_bp,
+                max_bp=max_bp,
+            )
 
         if report:
             print(timestamp(), "Computed denominators.")
@@ -657,14 +677,19 @@ def _call_pairwise_h2_estimators(
             for idx1 in sample_idx1:
                 arr1 = matrix.slice_sample(idx1)
                 for idx2 in sample_idx2:
-                    arr2 = matrix.slice_sample(idx2)
+                    arr1, arr2 = matrix.slice_samples(idx2)
                     if use_genotype_probs:
+                        non_missing = matrix.get_non_missing_mask([idx1, idx2])
+                        if weights is not None:
+                            weights_12 = weights[non_missing]
+                        else:
+                            weights_12 = None
                         numer += _h2_gp_between_diploid(
-                            arr1,
-                            arr2,
-                            coords,
+                            arr1[non_missing],
+                            arr2[non_missing],
+                            coords[non_missing],
                             bins,
-                            weights=weights,
+                            weights=weights_12,
                         )
                     elif use_haplotypes:
                         numer += _h2_hap_between_diploid(

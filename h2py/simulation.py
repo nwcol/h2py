@@ -16,13 +16,7 @@ from .utils import timestamp
 # -----------------------------------------------------------------------------
 
 
-def generate_genotype_probs(
-    ts,
-    ref_seq=None,
-    depth=5,
-    p_err=0.01,
-    filtered=True,
-):
+def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
     """
     Generate genotype probabilities for a tree sequence using a simple model.
 
@@ -36,8 +30,6 @@ def generate_genotype_probs(
         Target mean coverage depth.
     p_err : float, optional
         Fixed sequencing error probability.
-    filtered : bool, optional
-        If True, remove sites where any sample lacks coverage from output.
 
     Returns
     -------
@@ -63,17 +55,16 @@ def generate_genotype_probs(
     haplotypes = np.stack(sample_seqs, axis=1)
 
     genotype_probs = np.zeros((seq_len, 3 * n_samples), dtype=np.float64)
-    if filtered:
-        sample_depths = np.zeros((seq_len, n_samples))
+    sample_depths = np.zeros((seq_len, n_samples))
 
     for ii in range(n_samples):
         sample = haplotypes[:, 2*ii:2*(ii+1)]
 
         # 'cheat' by calculating priors with true data
-            p_0 = np.sum(sample) / (2 * seq_len)
-            p_1 = 1 - p_0
-            p_het = np.sum(sample[:, 0] != sample[:, 1]) / (2 * seq_len)
-            priors = np.array([p_0 - p_het / 2, p_het, p_1 - p_het / 2])
+        p_0 = np.sum(sample) / (2 * seq_len)
+        p_1 = 1 - p_0
+        p_het = np.sum(sample[:, 0] != sample[:, 1]) / (2 * seq_len)
+        priors = np.array([p_0 - p_het / 2, p_het, p_1 - p_het / 2])
 
         # a different way to sample coverage depth
         k = 50 # Poisson parameter; I will later switch to gamma distr
@@ -98,16 +89,17 @@ def generate_genotype_probs(
         raw_gps = genotype_liks * priors
         norm = np.sum(raw_gps, axis=1)
         genotype_probs[:, 3*ii:3*(ii+1)] = raw_gps / norm[:, None]
-        if filtered:
-            sample_depths[:, ii] = depths
+        sample_depths[:, ii] = depths
 
-    # Get 0-indexed positions of sites
-    if filtered:
-        has_coverage = sample_depths > 0
-        mask = np.sum(has_coverage, axis=1) == n_samples
-        sites = np.where(mask)[0]
-    else:
-        sites = np.arange(seq_len)
+    # Mark missing data
+    missing = np.repeat(sample_depths == 0, 3, axis=1)
+    genotype_probs[missing] = -1
+
+    # Drop sites without coverage in any sample
+    depth_sum = np.sum(sample_depths, axis=1)
+    mask = depth_sum > 0
+    genotype_probs = genotype_probs[mask]
+    sites = np.where(mask)[0]
 
     return sites, genotype_probs
 

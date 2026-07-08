@@ -58,8 +58,8 @@ class GeneticMask:
     @property
     def complete(self):
         """Get a version of the mask which starts at 0 (offset=0)"""
-        # TODO
-        return
+        implicit = np.zeros(self.offset, dtype=bool)
+        return np.concatenate([implicit, self.mask])
 
     @property
     def n_accessible_sites(self):

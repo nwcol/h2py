@@ -8,7 +8,7 @@ import numpy as np
 import re
 
 from .masks import GeneticMask
-from . import simulations
+from . import simulation
 from . import utils
 
 
@@ -132,12 +132,20 @@ class GenotypeMatrix():
     pop_map : dict
         Mapping between population labels and lists of constituent sample
         indices.
+    mask : array-like, shape (n_sites,), optional
+        Boolean array
     """
 
-    def __init__(self, genotypes, positions, pop_map):
-        self.genotypes = np.asarray(genotypes, dtype=np.float64)
-        self.positions = np.asarray(positions, dtype=np.int64)
+    def __init__(self, genotypes, positions, pop_map, mask=None):
+        self._genotypes = np.asarray(genotypes, dtype=np.float64)
+        self._positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
+
+        if mask is not None:
+            self.apply_mask(mask)
+        else:
+            self.mask = None
+
         # Check genotype matrix shape against positions, pop_map
         if len(self.positions) != self.n_sites:
             raise ValueError("genotypes, positions site numbers are unequal")
@@ -154,6 +162,22 @@ class GenotypeMatrix():
 
     def __len__(self):
         return len(self.genotypes)
+
+    @property
+    def genotypes(self):
+        """Access masked genotype matrix."""
+        if self.mask is not None:
+            return self._genotypes[mask]
+        else:
+            return self._genotypes
+
+    @property
+    def positions(self):
+        """Access masked positions array."""
+        if self.mask is not None:
+            return self._positions[mask]
+        else:
+            return self._positions
 
     @property
     def shape(self):
@@ -176,12 +200,15 @@ class GenotypeMatrix():
     def n_pops(self):
         return len(self.pop_map)
 
+    def apply_mask(self):
+        pass
+
     def slice_sample(self, sample_idx):
-        """Access the 1d genotype array for a given sample."""
+        """Access the bare genotype array for a given sample index."""
         return self.genotypes[:, sample_idx]
 
     def slice_pop(self, pop):
-        """Get the genotype array for a given population."""
+        """Get the bare genotype array for a given population label."""
         return self.genotypes[:, self.pop_map[pop]]
 
     @classmethod
@@ -224,7 +251,7 @@ class GenotypeProbMatrix():
 
     Parameters
     ----------
-    genotype_probs : array-like, shape (n_sites, 3*n_samples)
+    genotype_probs : array-like, shape (n_sites, 3 * n_samples)
         Array of genotype probabilities. Probabilities p(0/0), p(0/1), p(1/1)
         for sample ``i`` are housed in columns ``3*i, 3*i+1, 3*i+2``.
     positions : np.ndarray, shape (n_sites)
@@ -233,10 +260,17 @@ class GenotypeProbMatrix():
         Mapping from population labels to lists of sample indices.
     """
 
-    def __init__(self, genotype_probs, positions, pop_map):
-        self.genotype_probs = np.asarray(genotype_probs, dtype=np.float64)
-        self.positions = np.asarray(positions, dtype=np.int64)
+    def __init__(
+        self,
+        genotype_probs,
+        positions,
+        pop_map,
+        accessible_mask=None
+    ):
+        self._genotype_probs = np.asarray(genotype_probs, dtype=np.float64)
+        self._positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
+
         # Check matrix shape against positions and pop_map
         if len(self.positions) != self.n_sites:
             raise ValueError(
@@ -244,6 +278,13 @@ class GenotypeProbMatrix():
         if sum([len(self.pop_map[x]) for x in self.pop_map]) != self.n_samples:
             raise ValueError(
                 "genotype_probs, pop_map sample numbers are unequal")
+
+        # Calculate missingness/masks for array access
+        # TODO apply mask first and operate on self.genotype_probs?
+        self._mask = None
+        self._non_missing = None
+        self.apply_mask(accessible_mask)
+        #self.find_non_missing_data(self._genotype_probs)
 
     def __str__(self):
         return (f"GenotypeProbMatrix ({self.n_sites} sites, "
@@ -256,6 +297,21 @@ class GenotypeProbMatrix():
     def __len__(self):
         """Number of sites; redundant with ``self.n_sites``."""
         return len(self.genotype_probs)
+
+    @property
+    def genotype_probs(self):
+        """ """
+        if self._mask is not None:
+            return self._genotype_probs[self._mask]
+        else:
+            return self._genotype_probs
+
+    @property
+    def positions(self):
+        if self._mask is not None:
+            return self._positions[self._mask]
+        else:
+            return self._positions
 
     @property
     def shape(self):
@@ -278,20 +334,90 @@ class GenotypeProbMatrix():
     def n_pops(self):
         return len(self.pop_map)
 
-    def slice_sample(self, sample_idx):
-        """Access the bare genotype probability array for a sample."""
-        return self.genotype_probs[:, self.get_genotype_prob_idx(sample_idx)]
+    def apply_mask(self, accessible_mask):
+        """
 
-    def slice_pop(self, pop):
+        """
+        if accessible_mask is not None:
+            self._mask = accessible_mask[self.positions]
+        self._non_missing = self.find_non_missing_data(self.genotype_probs)
+
+    def get_non_missing_mask(self, sample_idx):
+        """
+        Get boolean array with False where any indexed sample has missing data.
+        """
+        if isinstance(sample_idx, int):
+            sample_idx = [sample_idx]
+        return np.prod(self._non_missing[:, sample_idx], axis=1).astype(bool)
+
+    def get_sample_positions(self, sample_idx):
+        """
+        Get 0-indexed positions where one or more samples have non-missing GPs.
+
+        Parameters
+        ----------
+        sample_idx : int or list of int
+            If more than one sample is given, return the intersection of sites
+            with non-missing data across samples.
+        """
+        return self.positions[self.get_non_missing_mask(sample_idx)]
+
+    def slice_sample(self, sample_idx, drop_missing_data=False):
+        """
+        Access the bare genotype probability array for a single sample.
+        """
+        idx = self.get_genotype_prob_idx(sample_idx)
+        if drop_missing_data:
+            mask = self.get_non_missing_mask(sample_idx)
+            return self.genotype_probs[:, idx][mask]
+        else:
+            return self.genotype_probs[:, idx]
+
+    def slice_samples(self, sample_idx, drop_missing_data=True):
+        """Access bare genotype probability arrays for several samples."""
+        idx = [self.get_genotype_prob_idx(s) for s in sample_idx]
+        if drop_missing_data:
+            mask = self.get_non_missing_mask(sample_idx)
+            return [self.genotype_probs[:, i][mask] for i in idx]
+        else:
+            return [self.genotype_probs[:, idx] for i in idx]
+
+    def slice_pop(self, pop, drop_missing_data=True):
         """Access the bare genotype probability array for a population."""
-        idx = [i for s in self.pop_map[pop]
-               for i in self.get_genotype_prob_idx(s)]
-        return self.genotype_probs[:, idx]
+        sample_idx = self.pop_map[pop]
+        idx = [i for s in sample_idx for i in self.get_genotype_prob_idx(s)]
+        if drop_missing_data:
+            mask = self.get_non_missing_mask(sample_idx)
+            return self.genotype_probs[mask, idx]
+        else:
+            return self.genotype_probs[:, idx]
 
     @staticmethod
     def get_genotype_prob_idx(sample_idx):
         """Return the indices to genotype probabilities for a sample."""
         return [3 * sample_idx, 3 * sample_idx + 1, 3 * sample_idx + 2]
+
+    @staticmethod
+    def find_non_missing_data(data):
+        """
+        Get an array of sample-specific masks to exclude missing data.
+
+        Missing genotype probability data is represented as ``[-1, -1, -1]``.
+
+        Parameters
+        ----------
+        data : np.ndarray, shape (n_sites, 3 * n_samples)
+            Genotype probability array.
+
+        Returns
+        -------
+        np.ndarray : shape (n_sites, n_samples)
+            Boolean array, with True where data is non-missing and False
+            elsewhere.
+        """
+        n_sites, n_cols = data.shape
+        n_samples = int(n_cols / 3)
+        return np.sum(np.reshape(data, (n_sites, n_samples, 3)), axis=-1) > 0
 
     @classmethod
     def from_haplotype_matrix(cls):
@@ -381,6 +507,7 @@ def read_vcf_file(
     vcf_file,
     bed_file=None,
     interval=None,
+    mask=None,
     chromosome=None,
     pop_file=None,
     phased=False,
@@ -399,6 +526,8 @@ def read_vcf_file(
         Path to BED file that specifies accessible intervals.
     interval : tuple, length 2, optional
         BED-style (0-indexed, half open) interval to read.
+    mask : GeneticMask, optional
+        Genetic mask.
     chromosome : str, optional
         If given, ignore all sites with other ``CHROM``.
     pop_file : str, path, optional
@@ -429,10 +558,15 @@ def read_vcf_file(
     # TODO raise errors if incompatible arg combos are given
 
     # Load mask and population files, if given
+    if mask is not None and bed_file is not None:
+        raise ValueError("cannot use both `mask` and `bed_file`")
+
     if bed_file is not None:
         mask = GeneticMask.from_bed_file(bed_file)
-    else:
-        mask = None
+
+    # Replace `GeneticMask` instance with boolean array starting at position 0
+    if mask is not None:
+        mask_arr = mask.complete
 
     if pop_file is not None:
         pop_spec = _read_pop_file(pop_file)

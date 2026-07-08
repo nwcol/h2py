@@ -4,7 +4,7 @@ from . import masks
 from . import matrices
 from . import parsing
 from . import plotting
-from . import simulations
+from . import simulation
 from . import stats
 from . import uncerts
 from . import utils
