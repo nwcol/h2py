@@ -18,6 +18,7 @@ means_varcovs = h2py.parsing.bootstrap_data(sums)
 """
 
 import numpy as np
+import warnings
 
 from .masks import GeneticMask
 from .matrices import HaplotypeMatrix, GenotypeMatrix, GenotypeProbMatrix
@@ -147,6 +148,14 @@ def compute_h2_stats(
         raise ValueError(
             "`use_genotype_probs`, `use_haplotypes` cannot both be True")
 
+    if use_genotype_probs and not pairwise:
+        warings.warn("`use_genotype_probs` has no multi-diploid estimators:"
+                     "forcing `pairwise=True`")
+
+    if use_genotype_probs and not compute_denoms:
+        warnings.warn("`use_genotype_probs` forces denominator calculation:"
+                      "ignoring `compute_denoms=False`")
+
     # Check matrix types and override `use_genotype_probs`, `use_haplotypes`
     preloaded = False
     if genotype_matrix is not None:
@@ -236,6 +245,8 @@ def compute_h2_stats(
         # Transform bin units to allow direct comparison to a genetic map
         bins = utils._map_function(np.array(r_bins))
         coords = _get_map_coords(rec_map_file, matrix.positions)
+        if compute_denoms and not use_genotype_probs:
+            all_coords = _get_map_coords(rec_map_file, mask.to_positions())
         if report:
             print(timestamp(), "Loaded map coordinates",
                   f"({coords[0]:.4} to {coords[-1]:.4} M)")
@@ -244,6 +255,8 @@ def compute_h2_stats(
             raise ValueError("r_bins or bp_bins is required")
         bins = np.array(bp_bins)
         coords = matrix.positions
+        if compute_denoms and not use_genotype_probs:
+            all_coords = mask.to_positions()
         if report:
             print(timestamp(),
                   f"Using physical positions ({coords[0]} to {coords[-1]} bp)")
@@ -259,6 +272,7 @@ def compute_h2_stats(
     else:
         weights = None
 
+    # Prepare some specifications for estimation
     if pops is None:
         pops = matrix.pops
 
@@ -266,58 +280,59 @@ def compute_h2_stats(
         n_pops = len(pops)
         stats_to_compute = (utils._h2_names(n_pops), utils._h_names(n_pops))
 
-    if report:
-        print(timestamp(), "Computing statistics ...")
-
-    if pairwise:
-        _compute_func = _call_pairwise_h2_estimators
-    else:
-        _compute_func = _call_multi_sample_h2_estimators
-
-    sums_list = _compute_func(
-        matrix,
-        coords,
-        bins,
-        pops,
-        stats_to_compute,
-        weights=weights,
-        use_genotype_probs=use_genotype_probs,
-        use_haplotypes=use_haplotypes,
-        min_bp=min_bp,
-        max_bp=max_bp,
-    )
-
-    if report:
-        print(timestamp(), "Computed statistics.")
-
-    # Compute denominators
-    if compute_denoms:
+    # Genotype probability pathway
+    if use_genotype_probs:
         if report:
-            print(timestamp(), "Computing denominators ...")
-
-        if use_genotype_probs:
-            denoms = _compute_h2_gp_denoms(
+            print(timestamp(), "Computing statistics and denominators ...")
+        sums_list, denoms_list = _call_genotype_prob_h2_estimators(
+            matrix,
+            coords,
+            bins,
+            pops,
+            stats_to_compute,
+            weights=weights,
+            pos=matrix.positions,
+            min_bp=min_bp,
+            max_bp=max_bp
+        )
+        if report:
+            print(timestamp(), "Computed statistics and denominators.")
+    # Genotype/haplotype pathway
+    else:
+        if report:
+            print(timestamp(), "Computing statistics ...")
+        if pairwise:
+            sums_list = _call_pairwise_h2_estimators(
                 matrix,
                 coords,
                 bins,
                 pops,
                 stats_to_compute,
+                weights=weights,
+                use_haplotypes=use_haplotypes,
+                pos=matrix.positions,
                 min_bp=min_bp,
                 max_bp=max_bp,
             )
         else:
+            sums_list = _call_pooled_h2_estimators()
+        if report:
+            print(timestamp(), "Computed statistics.")
+
+        if compute_denoms:
+            if report:
+                print(timestamp(), "Computing denominators ...")
             denoms = _compute_h2_denoms(
-                coords,
+                all_coords,
                 bins,
                 pos=pos,
                 min_bp=min_bp,
                 max_bp=max_bp,
             )
-
-        if report:
-            print(timestamp(), "Computed denominators.")
-    else:
-        denoms = None
+            if report:
+                print(timestamp(), "Computed denominators.")
+        else:
+            denoms = None
 
     bin_tuples = _get_bin_tuples(bins)
 
@@ -586,11 +601,15 @@ def _compute_h2_denoms(
         max_idx = None
 
     # Get indices of lowest-index right loci in the zeroth bin
-    lower_idx = np.maximum(np.searchsorted(coords, coords + bins[0]), min_idx)
+    lower_idx = np.searchsorted(coords, coords + bins[0])
+    lower_idx = np.maximum(lower_idx, min_idx)
 
     for ii, upper_edge in enumerate(bins[1:]):
         # Get indices (exclusive) of highest-index right loci in bin ``ii``
         upper_idx = np.searchsorted(coords, coords + upper_edge)
+        # TODO this is always not None
+        if min_idx is not None:
+            upper_idx = np.maximum(upper_idx, min_idx)
         if max_idx is not None:
             upper_idx = np.minimum(upper_idx, max_idx)
         binned_denoms[ii] = np.sum(upper_idx - lower_idx)
@@ -603,7 +622,125 @@ def _compute_h2_denoms(
 
 
 # -----------------------------------------------------------------------------
-# Pairwise H2 estimators. These take diploid genotype/haplotype/GP arrays.
+# Genotype probability estimators
+# -----------------------------------------------------------------------------
+
+
+def _call_genotype_prob_h2_estimators(
+    matrix,
+    coords,
+    bins,
+    pops,
+    stats_to_compute,
+    weights=weights,
+    pos=None,
+    min_bp=min_bp,
+    max_bp=max_bp,
+):
+    """
+    Call estimator functions to compute H2 from genotype probability data.
+
+    # TODO document
+    """
+    h2_stats_to_compute = stats_to_compute[0]
+    n_stats = len(h2_stats_to_compute)
+    n_rows = len(bins)
+    sums_arr = np.zeros((n_rows, n_stats), dtype=np.float64)
+    denoms_arr = np.zeros((n_rows, n_stats), dtype=np.int64)
+
+    for stat_idx, stat in enumerate(h2_stats_to_compute):
+        parts = stat.split("_")
+        pop_idx = [int(x) for x in parts[1:]]
+        sums_stat = np.zeros(n_rows, dtype=np.float64)
+        denoms_stat = np.zeros(n_rows, dtype=np.int64)
+
+        # Within-population
+        if pop_idx[0] == pop_idx[1]:
+            sample_idx = matrix.pop_map[pops[pop_idx[0]]]
+            for idx in sample_idx:
+                arr = matrix.slice_sample(idx)
+                # Account for sample-specific missing data
+                mask = matrix.get_non_missing_mask(idx)
+                sums_out, denoms_out = _h2_gp_within_diploid(
+                    arr[mask],
+                    coords[mask],
+                    bins,
+                    weights=weights[mask] if weights is not None else None,
+                    pos=pos[mask] if pos is not None else None,
+                    min_bp=min_bp,
+                    max_bp=max_bp,
+                )
+                sums_stat += sums_out
+                denoms_stat += denoms_out
+
+        # Between-population
+        else:
+            sample_idx1 = matrix.pop_map[pops[pop_idx[0]]]
+            sample_idx2 = matrix.pop_map[pops[pop_idx[1]]]
+            for idx1 in sample_idx1:
+                arr1 = matrix.slice_sample(idx1)
+                for idx2 in sample_idx2:
+                    arr2 = matrix.slice_sample(idx2)
+                    mask = matrix.get_non_missing_mask([idx1, idx2])
+                    sums_out, denoms_out = _h2_gp_between_diploid(
+                        arr1[mask],
+                        arr2[mask],
+                        coords[mask],
+                        bins,
+                        weights=weights[mask] if weights is not None else None,
+                        pos=pos[mask] if pos is not None else None,
+                        min_bp=min_bp,
+                        max_bp=max_bp,
+                    )
+                    sums_stat += sums_out,
+                    denoms_stat += denoms_out
+
+        sums_arr[:, stat_idx] = sums_stat
+        denoms_arr[:, stat_idx] = denoms_stat
+
+    sums_list = [row for row in sums_arr]
+    denoms_list = [row for row in denoms_arr]
+
+    return sums_list, denoms_list
+
+
+def _h2_gp_within_diploid(
+    arr,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
+    """Compute within-diploid H2 from genotype probabilities."""
+    p_het = arr[:, 1]
+    return _bin_pair_products(p_het, coords, bins, pos=pos, weights=weights,
+                              min_bp=min_bp, max_bp=max_bp)
+
+
+def _h2_gp_between_diploid(
+    arr1,
+    arr2,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
+    """Compute between-diploid H2 from genotype probabilities."""
+    p_alt1 = arr1[:, 1] / 2 + arr1[:, 2]
+    p_ref1 = 1 - p_alt1
+    p_alt2 = arr1[:, 1] / 2 + arr2[:, 2]
+    p_ref2 = 1 - p_alt2
+    p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
+    return _bin_pair_products(p_diff, coords, bins, pos=pos, weights=weights,
+                              min_bp=min_bp, max_bp=max_bp)
+
+
+# -----------------------------------------------------------------------------
+# Pairwise genotype/haplotype estimators
 # -----------------------------------------------------------------------------
 
 
@@ -613,210 +750,253 @@ def _call_pairwise_h2_estimators(
     bins,
     pops,
     stats_to_compute,
+    use_haplotypes=False
     weights=None,
-    use_genotype_probs=False,
-    use_haplotypes=False,
+    pos=None,
     min_bp=None,
     max_bp=None,
 ):
     """
-    Compute specified H2 statistics by averaging across basic within and
-    between-diploid estimators.
+    Call estimator functions to estimate H2 from genotype or haplotype data.
 
-    Parameters
-    ----------
-
-    Returns
-    -------
-    np.ndarray of binned H2 sums.
+    #TODO document me
     """
     h2_stats_to_compute = stats_to_compute[0]
-    n_bins = len(bins) - 1
-    n_pops = len(pops)
     n_stats = len(h2_stats_to_compute)
-    result = np.zeros((n_bins, n_stats), dtype=np.float64)
+    n_rows = len(bins)
+    sums_arr = np.zeros((n_rows, n_stats), dtype=np.float64)
 
     for stat_idx, stat in enumerate(h2_stats_to_compute):
         parts = stat.split("_")
         pop_idx = [int(x) for x in parts[1:]]
+        sums_stat = np.zeros(n_rows, dtype=np.float64)
 
         # Within-population path: average over within-diploid estimators
         if pop_idx[0] == pop_idx[1]:
             sample_idx = matrix.pop_map[pops[pop_idx[0]]]
-            numer = np.zeros(n_bins, dtype=np.float64)
-            denom = len(sample_idx)
+            n_calls = len(sample_idx)
+
             for idx in sample_idx:
                 arr = matrix.slice_sample(idx)
-                if use_genotype_probs:
-                    numer += _h2_gp_within_diploid(
+                if use_haplotypes:
+                    sums_stat += _h2_hap_within_diploid(
                         arr,
                         coords,
                         bins,
                         weights=weights,
-                    )
-                elif use_haplotypes:
-                    numer += _h2_hap_within_diploid(
-                        arr,
-                        coords,
-                        bins,
-                        weights=weights,
+                        pos=pos,
+                        min_bp=min_bp,
+                        max_bp=max_bp
                     )
                 else:
-                    numer += _h2_geno_within_diploid(
+                    sums_stat += _h2_geno_within_diploid(
                         arr,
                         coords,
                         bins,
                         weights=weights,
+                        pos=pos,
+                        min_bp=min_bp,
+                        max_bp=max_bp,
                     )
         # Between-population path: average over between-diploid estimators
         else:
             sample_idx1 = matrix.pop_map[pops[pop_idx[0]]]
             sample_idx2 = matrix.pop_map[pops[pop_idx[1]]]
-            denom = len(sample_idx1) * len(sample_idx2)
-            numer = np.zeros(n_bins, dtype=np.float64)
+            n_calls = len(sample_idx1) * len(sample_idx2)
+
             for idx1 in sample_idx1:
                 arr1 = matrix.slice_sample(idx1)
                 for idx2 in sample_idx2:
-                    arr1, arr2 = matrix.slice_samples(idx2)
-                    if use_genotype_probs:
-                        non_missing = matrix.get_non_missing_mask([idx1, idx2])
-                        if weights is not None:
-                            weights_12 = weights[non_missing]
-                        else:
-                            weights_12 = None
-                        numer += _h2_gp_between_diploid(
-                            arr1[non_missing],
-                            arr2[non_missing],
-                            coords[non_missing],
-                            bins,
-                            weights=weights_12,
-                        )
-                    elif use_haplotypes:
-                        numer += _h2_hap_between_diploid(
+                    arr2 = matrix.slice_sample(idx2)
+                    if use_haplotypes:
+                        sums_stat += _h2_hap_between_diploid(
                             arr1,
                             arr2,
                             coords,
                             bins,
                             weights=weights,
+                            pos=pos,
+                            min_bp=min_bp,
+                            max_bp=max_bp,
                         )
                     else:
-                        numer += _h2_geno_between_diploid(
+                        sums_stat += _h2_geno_between_diploid(
                             arr1,
                             arr2,
                             coords,
                             bins,
                             weights=weights,
+                            pos=pos,
+                            min_bp=min_bp,
+                            max_bp=max_bp,
                         )
 
-        result[:, stat_idx] = numer / denom
+        # Average across calls
+        sums_arr[:, stat_idx] = sums_stat / n_calls
 
     # Transform the output array into a list, with one element for each bin
-    sums_list = [s for s in result]
-
-    # Compute the heterozygosity
-    h_sums = _compute_heterozygosity(
-        matrix,
-        pops,
-        stats_to_compute,
-        use_genotype_probs=use_genotype_probs,
-        use_haplotypes=use_haplotypes,
-    )
-    sums_list.append(h_sums)
+    sums_list = [row for row in sums_arr]
 
     return sums_list
 
 
-# Pairwise estimators operate on bare numpy arrays.
+# - Pairwise estimators operate on bare numpy arrays. -------------------------
 
 
-def _h2_hap_within_diploid(ht, coords, bins, weights=None):
+def _h2_hap_within_diploid(
+    arr,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
     """Compute within-diploid H2 from haplotype data."""
-    is_het = 1.0 * (ht[:, 0] != ht[:, 1])
-    if weights is not None:
-        is_het = is_het * weights
-    return _compute_binned_sums(is_het, coords, bins)
+    is_het = 1.0 * (arr[:, 0] != arr[:, 1])
+    return _bin_pair_products(is_het, coords, bins, weights=weights, pos=pos,
+                              min_bp=min_bp, max_bp=max_bp)[0]
 
 
-def _h2_hap_between_diploid(ht1, ht2, coords, bins, weights=None):
+def _h2_hap_between_diploid(
+    arr1,
+    arr2,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
     """Compute between-diploid H2 from haplotype data."""
     sums = 0.0
     # Average across haplotype-by-haplotype pairs
-    for hap1 in ht1.T:
-        for hap2 in ht2.T:
+    for hap1 in arr1.T:
+        for hap2 in arr2.T:
             is_het = 1.0 * (hap1 != hap2)
-            if weights is not None:
-                is_het = weights * is_het
-            sums += _compute_binned_sums(is_het, coords, bins)
+            sums += _bin_pair_products(is_het, coords, bins, weights=weights,
+                                       pos=pos, min_bp=min_bp, max_bp=max_bp)[0]
     return sums / 4
 
 
-def _h2_geno_within_diploid(gt, coords, bins, weights=None):
+def _h2_geno_within_diploid(
+    arr,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
     """Compute within-diploid H2 from genotype data."""
-    is_het = 1.0 * (gt == 1)
-    if weights is not None:
-        is_het = weights * is_het
-    return _compute_binned_sums(is_het, coords, bins)
+    is_het = 1.0 * (arr == 1)
+    return _bin_pair_products(is_het, coords, bins, weights=weights, pos=pos,
+                              min_bp=min_bp, max_bp=max_bp)[0]
 
 
-def _h2_geno_between_diploid(gt1, gt2, coords, bins, weights=None):
+def _h2_geno_between_diploid(
+    arr1,
+    arr2,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
     """Compute between-diploid H2 from genotype data."""
-    p_alt1 = gt1 / 2
+    p_alt1 = arr1 / 2
     p_ref1 = 1 - p_alt1
-    p_alt2 = gt2 / 2
+    p_alt2 = arr2 / 2
     p_ref2 = 1 - p_alt2
     p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
-    if weights is not None:
-        p_diff = weights * pi_diff
-    return _compute_binned_sums(p_diff, coords, bins)
+    return _bin_pair_products(p_diff, coords, bins, weights=weights, pos=pos,
+                              min_bp=min_bp, max_bp=max_bp)[0]
 
 
-def _h2_gp_within_diploid(gp, coords, bins, weights=None):
-    """Compute within-diploid H2 from genotype probabilities."""
-    p_het = gp[:, 1]
-    if weights is not None:
-        p_het = weights * p_het
-    return _compute_binned_sums(p_het, coords, bins)
-
-
-def _h2_gp_between_diploid(gp1, gp2, coords, bins, weights=None):
-    """Compute between-diploid H2 from genotype probabilities."""
-    p_alt1 = gp1[:, 1] / 2 + gp1[:, 2]
-    p_ref1 = 1 - p_alt1
-    p_alt2 = gp1[:, 1] / 2 + gp2[:, 2]
-    p_ref2 = 1 - p_alt2
-    p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
-    if weights is not None:
-        p_diff = weights * pi_diff
-    return _compute_binned_sums(p_diff, coords, bins)
-
-
-def _compute_binned_sums(site_vals, coords, bins):
+def _bin_pair_products(
+    scores,
+    coords,
+    bins,
+    weights=None,
+    pos=None,
+    min_bp=None,
+    max_bp=None,
+):
     """
-    Engine for calculating binned sums of pairwise H2 estimators.
+    Engine for calculating aggregate H2 from precomputed site ``scores``.
 
-    Specifically, for each of the (n_sites choose 2) pairs of sites i, j that
-    can be drawn from ``site_vals``, increment ``site_vals[i] * site_vals[j]``
-    to the bin corresponding to the site distance, ``coords[j] - coords[i]``.
+    Specifically, for each unique pair of sites (i, j), compute the product
+    ``scores[i] * scores[j]`` and increment it to the bin which captures
+    distance ``coords[j] - coords[i]``.
 
-    Within and between-diploid estimators for H2 present a special case, where
-    we can usually calculate H2 by taking products of some site value. For a
-    single diploid, this value is ``1`` for heterozygous sites and ``0`` else.
+    Parameters
+    ----------
+    scores : np.ndarray, shape (n_sites,)
+        Value with which to compute H2.
+        For within-diploid estimators, this is site heterozygosity.
+    coords : np.ndarray, shape (n_sites,)
+        Site genetic map coordinates OR physical positions.
+    bins : array-like, shape (n_bins + 1,)
+        Distance bins. These must share units with ``coords``.
+    weights : np.ndarray, shape (n_sites,), optional
+        Optional site weights.
+    pos : np.ndarray, shape (n_sites,), optional
+        Physical positions of sites. Required to specify min/max pair distance.
+    min_bp : int, optional
+        Sites separated by less than this minimum physical distance are skipped
+    max_bp : int, optional
+        Sites separated by more than this max. physical distance are skipped.
+
+    Returns
+    -------
+    binned_prods : np.ndarray, shape (n_bins + 1,)
+        Products of ``scores`` for possible site pairs, summed in bins by
+        distance.
+    pair_counts : np.ndarray, shape (n_bins + 1,)
+        Number of site pairs observed in each bin. If ``coords`` encompasses
+        all accessible sites, this is the denominator of H2.
     """
-    binned_sums = np.zeros(len(bins) - 1, dtype=np.float64)
-    lower_sites = np.maximum(np.searchsorted(coords, coords + bins[0]),
-                             np.arange(1, len(coords) + 1))
-    cumulative = np.concatenate(([0], np.cumsum(site_vals)))
-    lower_cum_vals = cumulative[lower_sites]
+    if pos is None and (min_bp is not None or max_bp is not None):
+        raise ValueError("`pos` is required to specify min/max distance")
+
+    binned_prods = np.zeros(len(bins), dtype=np.float64)
+    pair_counts = np.zeros(len(bins), dtype=np.int64)
+
+    # Apply weights if given
+    if weights is not None:
+        scores = scores * weights
+
+    # Precompute bounds due to min/max physical distances
+    if min_bp is not None and min_bp > 1:
+        min_idx = np.searchsorted(pos, pos + min_bp)
+    else:
+        min_idx = np.arange(1, len(coords) + 1)
+    if max_bp is not None:
+        max_idx = np.searchsorted(pos, pos + max_bp)
+    else:
+        max_idx = None
+
+    # Get indices of lowest-index right loci in the zeroth bin
+    lower_idx = np.maximum(np.searchsorted(coords, coords + bins[0]), min_idx)
+
+    cum_scores = np.concatenate([[0], np.cumsum(scores)])
+
     for ii, upper_edge in enumerate(bins[1:]):
-        upper_sites = np.searchsorted(coords, coords + upper_edge)
-        upper_cum_vals = cumulative[upper_sites]
-        bin_cum_vals = upper_cum_vals - lower_cum_vals
-        # Take the product of left site values with cumulative right site
-        # values, then sum across left sites to obtain the bin-wide sum
-        binned_sums[ii] = np.sum(site_vals * bin_cum_vals)
-        lower_sites = upper_sites
-        lower_cum_vals = upper_cum_vals
-    return binned_sums
+        upper_idx = np.searchsorted(coords, coords + upper_edge)
+        if min_idx is not None:
+            upper_idx = np.maximum(upper_idx, min_idx)
+        if max_idx is not None:
+            upper_idx = np.minimum(upper_idx, max_idx)
+        score_diffs = cum_scores[upper_idx] - cum_scores[lower_idx]
+        binned_prods[ii] = np.sum(scores * score_diffs)
+        pair_counts[ii] = np.sum(upper_idx - lower_idx)
+        lower_idx = upper_idx
+
+    binned_prods[-1] = np.sum(scores)
+    pair_counts[-1] = len(scores)
+
+    return binned_prods, pair_counts
 
 
 # -----------------------------------------------------------------------------
@@ -824,21 +1004,18 @@ def _compute_binned_sums(site_vals, coords, bins):
 # -----------------------------------------------------------------------------
 
 
-def _call_multi_sample_h2_estimators(
+def _call_pooled_h2_estimators(
     matrix,
     coords,
     bins,
     pops,
     stats_to_compute,
     weights,
-    use_genotype_probs=False,
     use_haplotypes=False,
     min_bp=None,
     max_bp=None,
 ):
     """Calculate H2 by counting types and applying multi-sample estimators."""
-    if use_genotype_probs:
-        raise ValueError("multi sample GP estimation is not implemented yet")
     return
 
 
