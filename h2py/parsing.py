@@ -329,10 +329,11 @@ def compute_h2_stats(
                 min_bp=min_bp,
                 max_bp=max_bp,
             )
+            denoms_list = [row for row in denoms]
             if report:
                 print(timestamp(), "Computed denominators.")
         else:
-            denoms = None
+            denoms_list = None
 
     bin_tuples = _get_bin_tuples(bins)
 
@@ -340,7 +341,7 @@ def compute_h2_stats(
         print(timestamp(), "    Done!")
 
     return {"pops": pops, "stats": stats_to_compute, "bins": bin_tuples,
-            "sums": sums_list, "denoms": denoms}
+            "sums": sums_list, "denoms": denoms_list}
 
 
 def compute_h2_denoms(
@@ -632,10 +633,10 @@ def _call_genotype_prob_h2_estimators(
     bins,
     pops,
     stats_to_compute,
-    weights=weights,
+    weights=None,
     pos=None,
-    min_bp=min_bp,
-    max_bp=max_bp,
+    min_bp=None,
+    max_bp=None,
 ):
     """
     Call estimator functions to compute H2 from genotype probability data.
@@ -692,7 +693,7 @@ def _call_genotype_prob_h2_estimators(
                         min_bp=min_bp,
                         max_bp=max_bp,
                     )
-                    sums_stat += sums_out,
+                    sums_stat += sums_out
                     denoms_stat += denoms_out
 
         sums_arr[:, stat_idx] = sums_stat
@@ -750,7 +751,7 @@ def _call_pairwise_h2_estimators(
     bins,
     pops,
     stats_to_compute,
-    use_haplotypes=False
+    use_haplotypes=False,
     weights=None,
     pos=None,
     min_bp=None,

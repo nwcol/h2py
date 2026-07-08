@@ -267,24 +267,18 @@ class GenotypeProbMatrix():
         pop_map,
         accessible_mask=None
     ):
+        # Check geometry
+        if len(positions) != len(genotype_probs):
+            raise ValueError("site number mismatch")
+        if genotype_probs.shape[1] != 3 * sum([len(pop_map[x]) for x in pop_map]):
+            raise ValueError("sample number mismatch")
+
         self._genotype_probs = np.asarray(genotype_probs, dtype=np.float64)
         self._positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
-
-        # Check matrix shape against positions and pop_map
-        if len(self.positions) != self.n_sites:
-            raise ValueError(
-                "genotype_probs, positions site numbers are unequal")
-        if sum([len(self.pop_map[x]) for x in self.pop_map]) != self.n_samples:
-            raise ValueError(
-                "genotype_probs, pop_map sample numbers are unequal")
-
-        # Calculate missingness/masks for array access
-        # TODO apply mask first and operate on self.genotype_probs?
         self._mask = None
         self._non_missing = None
-        self.apply_mask(accessible_mask)
-        #self.find_non_missing_data(self._genotype_probs)
+        # self.apply_mask(accessible_mask) TODO
 
     def __str__(self):
         return (f"GenotypeProbMatrix ({self.n_sites} sites, "
@@ -456,13 +450,11 @@ class GenotypeProbMatrix():
             Sample argument passed to ``msprime.sim_ancestry``, with form
             ``{"pop": sample_size,}``. Used to set up population map.
         """
-        sites, genotype_probs = simulations.generate_genotype_probs(
+        sites, genotype_probs = simulation.generate_genotype_probs(
             ts,
             ref_seq=ref_seq,
             depth=depth,
             p_err=p_err,
-            priors=priors,
-            filtered=filtered,
         )
         # Set up population mapping
         pop_map = dict()
