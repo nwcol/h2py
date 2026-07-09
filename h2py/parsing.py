@@ -243,6 +243,7 @@ def compute_h2_stats(
         if rec_map_file is None:
             raise ValueError("rec_map_file is required")
         # Transform bin units to allow direct comparison to a genetic map
+        init_bins = r_bins
         bins = utils._map_function(np.array(r_bins))
         coords = _get_map_coords(rec_map_file, matrix.positions)
         if compute_denoms and not use_genotype_probs:
@@ -253,7 +254,7 @@ def compute_h2_stats(
     else:
         if bp_bins is None:
             raise ValueError("r_bins or bp_bins is required")
-        bins = np.array(bp_bins)
+        init_bins = bins = np.array(bp_bins)
         coords = matrix.positions
         if compute_denoms and not use_genotype_probs:
             all_coords = mask.to_positions()
@@ -335,7 +336,7 @@ def compute_h2_stats(
         else:
             denoms_list = None
 
-    bin_tuples = _get_bin_tuples(bins)
+    bin_tuples = _get_bin_tuples(init_bins)
 
     if report:
         print(timestamp(), "    Done!")
@@ -421,7 +422,7 @@ def get_means_across_regions(all_data):
     """
     labels = list(all_data.keys())
     numers = [0.0 * row for row in all_data[labels[0]]["sums"]]
-    denoms = [0.0 for row in all_data[labels[0]]["denoms"]]
+    denoms = [0.0 * row for row in all_data[labels[0]]["denoms"]]
     for label in labels:
         for ii in range(len(numers)):
             numers[ii] += all_data[label]["sums"][ii]

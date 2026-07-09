@@ -4,17 +4,10 @@ to numerical accuracy
 - integrating GP array coverage with mask/interval when parsing with GPs
 (reorganize denominator computation). What is the best way to deal with the
 likely different coverages among samples?
-- load denominator computation objects inside the main parsing function rather
-than in the lower-level function.
 - add verbosity about mask coverage and denominator computation (number of site
 pairs, number of sites, map range)
-- use GeneticMask objects in parsing
 - non-destructive masking of variation matrices
 - mutation map reader and scaling.
-- add min/max physical distance args to parsing functions and implemnent them
-into the pair-counting engines.
-- is it more efficient to use moments counting functions than to write my own?
-probably.
 - implement multi-sample estimators.
 
 Plotting
