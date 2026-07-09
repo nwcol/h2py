@@ -152,7 +152,7 @@ def _h2_names(n_pops):
 
 def timestamp():
     """Get a string representing the date and time at the moment."""
-    return f"<{datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')}>"
+    return f"[{datetime.strftime(datetime.now(), '%y-%m-%d %H:%M:%S')}]"
 
 
 def _phred_function(p):
