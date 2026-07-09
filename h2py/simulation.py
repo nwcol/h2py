@@ -66,16 +66,6 @@ def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
         p_het = np.sum(sample[:, 0] != sample[:, 1]) / (2 * seq_len)
         priors = np.array([p_0 - p_het / 2, p_het, p_1 - p_het / 2])
 
-        priors = np.ones(3) / 3
-
-
-
-        """
-        goal: maximize P(R|f0,f1,theta) and use these to estimate prior
-        """
-
-        priors = np.array([f_0 - theta/2, theta, f_1 - theta/2])
-
         # Sample coverage depth
         depths = np.random.poisson(depth, size=seq_len)
         # Draw allele samples

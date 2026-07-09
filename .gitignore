@@ -1,5 +1,5 @@
 h2py.egg-info/
 **/__pycache__/
+**/.ipynb_checkpoints/
 temp_examples/
-notebooks/
 examples/data/

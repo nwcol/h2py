@@ -402,6 +402,9 @@ def bootstrap_data(all_data):
     reshaped_means = [[m[i] for m in bootstrap_means]
                        for i in range(len(means))]
     varcovs = [np.cov(np.array(m).T) for m in reshaped_means]
+    # If only one sample is present, force covs to be 2d
+    if len(means[0]) == 1:
+        varcovs = [c[None, None] for c in varcovs]
     template = all_data[labels[0]]
     return {"pops": template["pops"], "stats": template["stats"],
             "bins": template["bins"], "means": means, "varcovs": varcovs}

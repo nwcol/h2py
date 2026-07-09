@@ -114,6 +114,8 @@ def write_fasta_file(path, sequences, labels, line_width=80):
 
     with open(path, "w") as fout:
         for sequence, label in zip(sequences, labels):
+            if not isinstance(sequence, str):
+                sequence = "".join(sequence)
             label = ">" + label + "\n"
             fout.write(label)
             n_lines = len(sequence) // line_width + 1

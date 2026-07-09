@@ -265,7 +265,7 @@ class GenotypeProbMatrix():
         genotype_probs,
         positions,
         pop_map,
-        accessible_mask=None
+        mask=None
     ):
         # Check geometry
         if len(positions) != len(genotype_probs):
@@ -277,7 +277,7 @@ class GenotypeProbMatrix():
         self._positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
         self._mask = None
-        self._non_missing = None
+        self._non_missing = self.find_non_missing_data(genotype_probs)
         # self.apply_mask(accessible_mask) TODO
 
     def __str__(self):
@@ -469,6 +469,7 @@ class GenotypeProbMatrix():
     def from_vcf(
         cls,
         vcf_file,
+        mask=None,
         bed_file=None,
         interval=None,
         chromosome=None,
@@ -480,6 +481,7 @@ class GenotypeProbMatrix():
         """
         genotype_probs, positions, pop_map = read_vcf_file(
             vcf_file,
+            mask=mask,
             bed_file=bed_file,
             interval=interval,
             chromosome=chromosome,
@@ -651,6 +653,12 @@ def read_vcf_file(
             positions.append(pos0)
 
     positions = np.asarray(positions, dtype=np.int64)
+
+    # Scan for missing data
+    for ii, row in enumerate(matrix):
+        for jj, elem in enumerate(row):
+            if elem == ".":
+                matrix[ii][jj] = "-1"
 
     if read_genotype_probs:
         matrix = np.asarray(matrix, dtype=np.float64)
