@@ -28,7 +28,7 @@ class HaplotypeMatrix:
         Mapping between population labels and indices of diploid samples.
     """
 
-    def __init__(self, haplotypes, positions, pop_map):
+    def __init__(self, haplotypes, positions, pop_map, mask=None):
         self.haplotypes = np.asarray(haplotypes, dtype=np.float64)
         self.positions = np.asarray(positions, dtype=np.int64)
         self.pop_map = pop_map
@@ -95,6 +95,7 @@ class HaplotypeMatrix:
     def from_vcf(
         cls,
         vcf_file,
+        mask=None,
         bed_file=None,
         interval=None,
         chromosome=None,
@@ -107,6 +108,7 @@ class HaplotypeMatrix:
         """
         haplotypes, positions, pop_map = read_vcf_file(
             vcf_file,
+            mask=mask,
             bed_file=bed_file,
             interval=interval,
             chromosome=chromosome,
@@ -215,6 +217,7 @@ class GenotypeMatrix():
     def from_vcf(
         cls,
         vcf_file,
+        mask=None,
         bed_file=None,
         interval=None,
         chromosome=None,
@@ -226,6 +229,7 @@ class GenotypeMatrix():
         """
         genotypes, positions, pop_map = read_vcf_file(
             vcf_file,
+            mask=mask,
             bed_file=bed_file,
             interval=interval,
             chromosome=chromosome,
@@ -430,11 +434,9 @@ class GenotypeProbMatrix():
         cls,
         ts,
         samples,
-        ref_seq=None,
+        seq_len=None,
         depth=10,
         p_err=0.01,
-        priors=None,
-        filtered=True,
     ):
         """
         Use a simple simulation to generate a genotype probability matrix from
@@ -452,7 +454,7 @@ class GenotypeProbMatrix():
         """
         sites, genotype_probs = simulation.generate_genotype_probs(
             ts,
-            ref_seq=ref_seq,
+            seq_len=seq_len,
             depth=depth,
             p_err=p_err,
         )

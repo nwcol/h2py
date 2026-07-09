@@ -247,7 +247,14 @@ def compute_h2_stats(
         bins = utils._map_function(np.array(r_bins))
         coords = _get_map_coords(rec_map_file, matrix.positions)
         if compute_denoms and not use_genotype_probs:
-            all_coords = _get_map_coords(rec_map_file, mask.to_positions())
+            if mask is not None:
+                all_pos = mask.to_positions()
+            else:
+                if interval is None:
+                    raise ValueError(
+                        "`interval` or `mask` required to compute denoms")
+                all_pos = np.arange(interval[0], interval[1])
+            all_coords = _get_map_coords(rec_map_file, all_pos)
         if report:
             print(timestamp(), "Loaded map coordinates",
                   f"({coords[0]:.4} to {coords[-1]:.4} M)")
@@ -257,7 +264,13 @@ def compute_h2_stats(
         init_bins = bins = np.array(bp_bins)
         coords = matrix.positions
         if compute_denoms and not use_genotype_probs:
-            all_coords = mask.to_positions()
+            if mask is not None:
+                all_pos = all_coords = mask.to_positions()
+            else:
+                if interval is None:
+                    raise ValueError(
+                        "`interval` or `mask` required to compute denoms")
+                all_pos = all_coords = np.arange(interval[0], interval[1])
         if report:
             print(timestamp(),
                   f"Using physical positions ({coords[0]} to {coords[-1]} bp)")
@@ -326,7 +339,7 @@ def compute_h2_stats(
             denoms = _compute_h2_denoms(
                 all_coords,
                 bins,
-                pos=pos,
+                pos=all_pos,
                 min_bp=min_bp,
                 max_bp=max_bp,
             )
@@ -735,9 +748,9 @@ def _h2_gp_between_diploid(
     max_bp=None,
 ):
     """Compute between-diploid H2 from genotype probabilities."""
-    p_alt1 = arr1[:, 1] / 2 + arr1[:, 2]
+    p_alt1 = 0.5 * arr1[:, 1] + arr1[:, 2]
     p_ref1 = 1 - p_alt1
-    p_alt2 = arr1[:, 1] / 2 + arr2[:, 2]
+    p_alt2 = 0.5 * arr2[:, 1] + arr2[:, 2]
     p_ref2 = 1 - p_alt2
     p_diff = p_alt1 * p_ref2 + p_alt2 * p_ref1
     return _bin_pair_products(p_diff, coords, bins, pos=pos, weights=weights,

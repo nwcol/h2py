@@ -16,7 +16,13 @@ from .utils import timestamp
 # -----------------------------------------------------------------------------
 
 
-def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
+def generate_genotype_probs(
+    ts,
+    seq_len=None,
+    ref_div=1e-4,
+    depth=10,
+    p_err=0.001
+):
     """
     Generate genotype probabilities for a tree sequence using a simple model.
 
@@ -36,23 +42,12 @@ def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
     sites : np.ndarray, shape (n_sites,)
     genotype_probs : np.ndarray, shape (n_sites, 3 * n_samples)
     """
-    # Extract sequences from the tree sequence/
+    # Extract sequences from the tree sequence
     seq_strs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
-    n_samples = int(len(seq_strs) / 2)
-    seq_len = len(seq_strs[0])
-
-    if ref_seq is None:
-        ref_seq = np.random.randint(0, 2, size=seq_len)
-    else:
-        if isinstance(ref_seq, str):
-            ref_seq = np.array([b for b in ref_seq], dtype=np.int64)
-
-    sample_seqs = []
-    for seq in seq_strs:
-        seq = np.array([b for b in seq.replace("N", "0")], dtype=np.int64)
-        # Orient to the reference sequence.
-        sample_seqs.append(1 * (seq == ref_seq))
+    sample_seqs = _get_sample_sequences(seq_strs, ref_div=ref_div)
     haplotypes = np.stack(sample_seqs, axis=1)
+    n_samples = int(haplotypes.shape[1] / 2)
+    seq_len = len(seq_strs[0])
 
     genotype_probs = np.zeros((seq_len, 3 * n_samples), dtype=np.float64)
     sample_depths = np.zeros((seq_len, n_samples))
@@ -61,20 +56,43 @@ def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
         sample = haplotypes[:, 2*ii:2*(ii+1)]
 
         # 'cheat' by calculating priors with true data
-        p_0 = np.sum(sample) / (2 * seq_len)
-        p_1 = 1 - p_0
-        p_het = np.sum(sample[:, 0] != sample[:, 1]) / (2 * seq_len)
-        priors = np.array([p_0 - p_het / 2, p_het, p_1 - p_het / 2])
+        genotypes = np.sum(sample, axis=1)
+        #priors = np.array([
+        #    np.sum(genotypes == 0),
+        #    np.sum(genotypes == 1),
+        #    np.sum(genotypes == 2)]) / len(genotypes)
+
+        # p_alt = np.sum(sample) / (2 * seq_len)
+        # p_ref = 1 - p_alt
+        # p_het = np.sum(sample[:, 0] != sample[:, 1]) / seq_len
+        # priors = np.array([p_0 - p_het / 2, p_het, p_1 - p_het / 2])
+
+        # priors = np.ones(3) / 3
+
+        # priors = np.array([
+        #     p_ref * (np.exp(-p_het) + p_ref * (1 - np.exp(-p_het))),
+        #     2 * p_ref * p_alt * (1 - np.exp(-p_het)),
+        #     p_alt * (np.exp(-p_het) + p_alt * (1 - np.exp(-p_het))),
+        # ])
 
         # Sample coverage depth
         depths = np.random.poisson(depth, size=seq_len)
         # Draw allele samples
-        f_alt = np.sum(sample, axis=1) / 2
+        f_alt = genotypes / 2
         p_alt = f_alt + (1 - 2 * f_alt) * p_err
         n_alt = np.random.binomial(depths, p_alt)
         n_ref = depths - n_alt
         # Calculate genotype likelihoods
-        genotype_liks = _get_genotype_likelihoods(n_ref, n_alt, p_err)
+        genotype_liks = _compute_genotype_likelihood(n_ref, n_alt, p_err)
+
+        # priors
+        p_1 = np.sum(genotypes) / (2 * seq_len)
+        p_0 = 1 - p_1
+        theta = np.sum(genotypes == 1) / seq_len
+        priors = np.array([p_0 * (1-theta) + p_0 ** 2 * theta,
+                           2 * p_0 * p_1 * theta,
+                           p_1 * (1-theta) + p_1 ** 2 * theta])
+
         # Weight genotype likelihoods by the priors
         raw_gps = genotype_liks * priors
         norm = np.sum(raw_gps, axis=1)
@@ -94,45 +112,34 @@ def generate_genotype_probs(ts, ref_seq=None, depth=5, p_err=0.01):
     return sites, genotype_probs
 
 
-def _get_genotype_likelihoods(n_ref, n_alt, p_err):
+def _compute_genotype_likelihood(n_ref, n_alt, p_err):
     """
+    Compute likelihoods for genotypes 0/0, 0/1, 1/1 from arrays of reference/
+    alternate read counts and a fixed error rate.
     """
-    gts = (0, 1, 2)
-    ref_lik = np.array([(g * p_err + (2 - g) * (1 - p_err)) / 2 for g in gts])
-    alt_lik = np.array([(g * (1 - p_err) + (2 - g) * p_err) / 2 for g in gts])
-    return ref_lik ** n_ref[:, None] * alt_lik ** n_alt[:, None]
+    return np.stack([(1 - p_err) ** n_ref * p_err ** n_alt,
+                     0.5 ** (n_ref + n_alt),
+                     p_err ** n_ref * (1 - p_err) ** n_alt], axis=1)
 
 
-def _base_likelihood(gt, b, p):
+def _get_sample_sequences(fasta_strs, ref_div=1e-3):
     """
-    Compute the likelihood of one or more read bases given a genotype.
+    fasta_strs looks like ['001NNN01NN', ...]
+    """
+    seq_len = len(fasta_strs[0])
+    # Generate a reference sequence in ancestral/derived states
+    ref_seq = np.random.choice([1, 0], size=seq_len, p=[ref_div, 1 - ref_div])
+    seqs = []
+    for fasta_str in fasta_strs:
+        # Get the sample sequence as an array of ancestral/derived states
+        sample_seq = np.array([b for b in fasta_str.replace("N", "0")],
+                              dtype=np.int64)
+        # Tranform into reference/alternate states by comparison to `ref_seq`
+        _sample_seq = np.array([0 if sample_seq[i] == ref_seq[i] else 1
+                                for i in range(seq_len)], dtype=np.int64)
+        seqs.append(_sample_seq)
 
-    Parameters
-    ----------
-    gt : int
-        Genotype code, in {0, 1, 2}.
-    b : int or np.ndarray
-        Read base code(s), in {0, 1}.
-    p : float or np.ndarray
-        Sequencing error prob(s) for each base.
-    """
-    return ((1 - b) * gt * p + (1 - b) * (2 - gt) * (1 - p)
-          + b * gt * (1 - p) + b * (2 - gt) * p) / 2
-
-
-def _genotype_likelihood(bs, ps):
-    """
-    Compute biallelic genotype likelihoods across read bases.
-    """
-    return np.array([np.prod(base_likelihood(gt, bs, ps)) for gt in (0, 1, 2)])
-
-
-def _norm_genotype_likelihood(bs, ps):
-    """
-    Compute normalized, Phred-scaled biallelic genotype probabilities.
-    """
-    gls = utils._phred_function(_genotype_likelihood(gts, bs, ps))
-    return gls - np.min(gls)
+    return seqs
 
 
 # -----------------------------------------------------------------------------
