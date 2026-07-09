@@ -8,6 +8,7 @@ import numpy as np
 import os
 
 import h2py
+from h2py.utils import timestamp
 
 
 if not os.path.isdir("data/"):
@@ -15,11 +16,13 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 100
+n_reps = 50
 n_samples = 1  # per population
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
+depth = 5
+p_err = 1e-3
 
 
 # File names
@@ -30,15 +33,15 @@ bed_file = "data/coverage.bed"
 
 def demographic_model():
     b = demes.Builder()
-    b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=3e3)])
-    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=1e4)])
-    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=1e4)])
-    # b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
+    b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=4e3)])
+    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=2e4)])
+    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=5e3)])
+    b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
     g = b.resolve()
     return g
 
 
-def run_sim(g):
+def run_sim(g, i):
     demog = msprime.Demography.from_demes(g)
     samples = {"pop0": n_samples, "pop1": n_samples}
     ts = msprime.sim_ancestry(
@@ -48,7 +51,8 @@ def run_sim(g):
         recombination_rate=r,
     )
     ts = msprime.sim_mutations(ts, rate=u, model="binary")
-    gp = h2py.GenotypeProbMatrix.from_tree_sequence(ts, samples, depth=30)
+    gp = h2py.GenotypeProbMatrix.from_tree_sequence(
+        ts, samples, depth=depth, seq_len=L, p_err=p_err)
     sums = h2py.parsing.compute_h2_stats(
         genotype_prob_matrix=gp,
         use_genotype_probs=True,
@@ -56,8 +60,9 @@ def run_sim(g):
         bed_file=bed_file,
         rec_map_file=rec_map_file,
         r_bins=r_bins,
-        report=True,
+        report=False,
     )
+    print(timestamp(), f"Finished replicate {i}")
     return sums
 
 
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     write_bed_file()
     write_rec_map_file()
     g = demographic_model()
-    sums = {i: run_sim(g) for i in range(n_reps)}
+    sums = {i: run_sim(g, i) for i in range(n_reps)}
     boot_data = h2py.parsing.bootstrap_data(sums)
     model = h2py.H2stats.from_demes(g, sampled_demes=["pop0", "pop1"], u=u,
                                       r_bins=r_bins)
@@ -94,7 +99,8 @@ if __name__ == "__main__":
         model,
         boot_data["means"],
         boot_data["varcovs"],
-        r_bins=boot_data["bins"])
+        r_bins=boot_data["bins"]
+    )
 
     print(boot_data["means"][-1])
     print(model.data[-1])

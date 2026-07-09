@@ -11,7 +11,7 @@ if not os.path.isdir("data/"):
     os.makedirs("data/")
 
 # Simulation parameters
-L = 1_000_000
+L = 5_000_000
 n_reps = 100
 n_samples = 1 # per population
 u = 1.5e-8
@@ -27,10 +27,10 @@ bed_file = "data/coverage.bed"
 
 def demographic_model():
     b = demes.Builder()
-    b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=5e3)])
-    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=1e4)])
-    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=1e3)])
-    # b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
+    b.add_deme("anc", epochs=[dict(start_size=2e4, end_time=5e3)])
+    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=2e4)])
+    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=2e4)])
+    b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
     g = b.resolve()
     return g
 
