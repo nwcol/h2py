@@ -19,6 +19,11 @@ from .stats import H2stats
 from .utils import timestamp
 
 
+# =============================================================================
+# Principal functions, for uncertainty estimation and LRT adjustment
+# =============================================================================
+
+
 def compute_uncerts(
     graph_file,
     options_file,
@@ -39,8 +44,63 @@ def compute_uncerts(
 ):
     """
     Compute confidence intervals for MLE parameters.
-    """
 
+    Parameters
+    ----------
+    graph_file : str, path
+        Path to YAML file containing optimized (MLE) model parameters in Demes
+        format.
+    options_file : str, path
+        Moments.Demes-style parameter specification file.
+    means : list
+        Arrays of mean H2 statistics- one for each bin.
+    varcovs : list
+        Covariance matrices generated with the bootstrap.
+    boot_means : list, optional
+        Bootstrap sample means; required to estimate uncertainty with the
+        Godambe information matrix.
+    pops : list
+        List of populations corresponding to the order of statistics in input
+        data. Each element must match the name of a deme in ``graph_file``.
+    r_bins : # TODO
+        Array of recombination bin edges.
+    u : float
+        Mutation rate parameter.
+    fit_u : bool, optional
+        If True, treat the mutation rate as a free parameter and estimate its
+        uncertainty.
+    phased : bool, optional
+        If True, compute phased model expectations. Should only be True when
+        H2 was computed from phased data with the haplotype setting.
+    method : str, optional
+        Uncertainty estimation method to use. Must be "GIM", "godambe", "FIM",
+        or "fisher". The "FIM"/"fisher" method is misspecified for composite
+        likelihood and should be taken critically.
+    return_matrix : bool, optional
+        If True, return the estimated Fisher or Godambe information matrix
+        (as specified by ``method``) along with minimal outputs.
+    report : bool, optional
+        If True, print progress messages.
+    delta : float, optional
+        Fractional step size for finite difference calculations.
+    bounds : tuple, optional
+        Optional upper/lower bounds on parameters. If bounds are not specified,
+        they are constructed using ``options_file``.
+    steps : np.ndarray, shape (n_params,), optional
+        Step sizes for finite difference calculations.
+
+    Returns
+    -------
+    param_names : list
+        Parameter names as defined in ``options_file``.
+    params : np.ndarray, shape (n_params,)
+        MLE parameter values loaded from ``graph_file``.
+    uncerts : np.ndarray, shape (n_params,)
+        Estimated uncertainties, in standard deviations.
+    matrix : np.ndarray, shape (n_params, n_params), optional
+        Fisher or Godambe information matrix; returned if ``return_matrix`` is 
+        True.
+    """
     param_names, params, model_args = _get_model_args(
         graph_file,
         options_file,
@@ -51,31 +111,41 @@ def compute_uncerts(
         phased=phased,
     )
 
-    # TODO set up bounds
-
-    args = (means, varcovs, model_args)
-
-    HH = _get_hessian_matrix(
-        params
-        _evaluate_ll,
-        args,
-        delta=delta,
-        steps=steps,
-        bounds=bounds,
-        report=report,
-    )
+    if bounds is None:
+        bounds = _get_param_bounds(options_file, param_names, params)
 
     if method == "FIM" or method == "fisher":
+        args = (means, varcovs, model_args)
+        HH = -_get_hessian_matrix(
+            params
+            _evaluate_ll,
+            args=args,
+            delta=delta,
+            steps=steps,
+            bounds=bounds,
+            report=report,
+        )
         FIM = np.linalg.inv(HH)
-        uncerts = np.sqrt(np.diag(matrix))
+        uncerts = np.sqrt(np.diag(FIM))
         matrix = FIM
 
     elif method == "GIM" or method == "godambe":
-        JJ = _get_variability_matrix(
+        if boot_means is None or len(boot_means) == 0:
+            raise ValueError("bootstrap samples are needed to use 'GIM'")
 
+        _, __, GIM = _get_godambe_matrix(
+            params,
+            _evaluate_ll,
+            means,
+            varcovs,
+            boot_means,
+            model_args,
+            delta=delta,
+            steps=steps,
+            bounds=bounds,
+            report=report,
         )
-        # Godambe matrix
-        GIM = HH @ np.linalg.inv(JJ) @ HH
+        uncerts = np.sqrt(np.diag(GIM))
         matrix = GIM
 
     else:
@@ -88,23 +158,157 @@ def compute_uncerts(
 
 
 def compute_lrt_adjustment(
+    nested_graph_file,
+    full_graph_file
+    options_file,
+    means,
+    varcovs,
+    boot_means,
+    nested_params=[], # TODO how to handle? need refresher here
+    nested_values=[],
+    pops=None,
+    r_bins=None,
+    u=None,
+    fit_u=None, # TODO does this matter here?
+    return_matrix=False,
+    report=True,
+    bounds=None,
+    steps=None,
 ):
     """
-    Compute an adjustment factor for the LRT test statistic.
+    Compute an adjustment factor for the LRT test statistic after Coffman et
+    al 2015.
+
+    Parameters
+    ----------
+    nested_graph_file : str, path
+        Demes YAML file with *nested* model at MLE parameters.
+    full_graph_file : str, path
+    options_file : str, path
+        Parameter specification file for the *full* model. Other than the
+        presence of nested parameters, this should be identical to the options
+        file used to fit the nested model.
+    ...
+    nested_params : list
+        List of nested parameter names.
+    nested_values : array-like
+        (boundary?) values of nested parameters.
+
+    Returns
+    -------
     """
-    return
 
-
-def _get_variability_matrix():
 
     """
-    Compute the observed variability matrix, an approximation to the Hessian
-    matrix for composite likelihood which is calculated with the bootstrap.
+    the idea is to manually drop nested parameters from loaded full-model
+    options, use them to load the nested model; then drop the nested-model
+    parameters into the full model graph and edit the nested parameters to
+    match ``nested_values``.
+    """
+    # TODO setup
+    params = "TODO"
+    param_names = "TODO" # Should be a list
+
+    nested_idx = np.array([param_names.index(p) for p in nested_params])
+
+    def nesting_func(p_nest, args):
+        """Adjust nested parameters only."""
+        p_full = np.array(params, copy=True)
+        p_full[nexted_idx] = p_nest
+        return _evaluate_ll(p_full, *args)
+
+    HH, JJ, _ = _get_godambe_matrix(
+        nested_params,
+        nesting_func,
+        means,
+        varcovs,
+        boot_means,
+        model_args,
+        delta=delta,
+        steps=steps,
+        bounds=bounds,
+        report=report,
+    )
+    fac = len(nested_idx) / np.trace(JJ @ np.linalg.inv(HH))
+
+    if return_matrix:
+        return fac, HH, JJ
+    else:
+        return fac
+
+
+# -----------------------------------------------------------------------------
+# Derivative calculators and utilities
+# -----------------------------------------------------------------------------
+
+
+def _get_godambe_matrix(
+    params,
+    func,
+    means,
+    varcovs,
+    boot_means,
+    model_args,
+    delta=0.01,
+    steps=None,
+    bounds=None,
+    report=True,
+):
+    """
+    Compute the Godambe information matrix (GIM).
+    """
+    args = (means, varcovs, model_args)
+    HH = -_get_hessian_matrix(
+        params,
+        func,
+        args=args,
+        delta=delta,
+        steps=steps,
+        bounds=bounds,
+        report=report,
+    )
+    JJ = _get_variability_matrix(
+        params,
+        func,
+        varcovs,
+        boot_means,
+        model_args=model_args,
+        delta=delta,
+        steps=steps,
+        bounds=bounds,
+        report=report,
+    )
+    GIM = HH @ np.linalg.inv(JJ) @ HH
+    return HH, JJ, GIM
+
+
+def _get_variability_matrix(
+    params,
+    func,
+    varcovs,
+    boot_means,
+    model_args=[],
+    delta=0.01,
+    steps=None,
+    bounds=None,
+    report=True,
+):
+    """
+    Compute the observed variability matrix: an approximation to the Hessian
+    matrix for composite likelihood, calculated with the bootstrap.
     """
     matrix = np.zeros((len(params), len(params)), dtype=np.float64)
 
     for means in boot_means:
-        score = _get_score()
+        args = (means, varcovs, model_args)
+        score = func(
+            params,
+            _evaluate_ll,
+            args=args,
+            delta=delta,
+            steps=steps,
+            bounds=bounds,
+        )
         matrix += score @ score.T
 
     return matrix / len(boot_means)
@@ -150,7 +354,8 @@ def _get_hessian_matrix(
     # Calculate the elements of the matrix by separate function calls
     for ii in range(n_params):
         for jj in range(n_params):
-            elem = _get_hessian_element(params, ii, jj, func, args, steps, bounds)
+            elem = _get_hessian_element(params, ii, jj, func,
+                                        args, steps, bounds)
             if ii == jj:
                 hessian[ii, ii] = elem
             else:
@@ -386,7 +591,7 @@ def _get_model_args(
     phased=False,
 ):
     """
-    Get a tuple of arguments for ``_evaluate_ll``.
+    Get a tuple of model construction arguments for ``_evaluate_ll``.
     """
     # Check for required keyword arguments
     if pops is None:
@@ -401,6 +606,15 @@ def _get_model_args(
     options = _get_params_dict(options_file)
     param_names, params = _set_up_params_and_bounds(options, builder)[:2]
 
+    deme_names = [d["name"] for d in builder["demes"]]
+    sample_times = []
+    for pop in pops:
+        assert pop in deme_names
+        idx = deme_names.index(pop)
+        end_time = builder["demes"][idx]["epochs"][-1]["end_time"]
+        sample_times.append(end_time)
+    sampled_demes = pops
+
     args = (
         builder,
         options,
@@ -412,6 +626,42 @@ def _get_model_args(
         phased,
     )
     return param_names, params, args
+
+
+def _get_param_bounds(options_file, param_names, params):
+    """
+    Get upper/lower bounds for parameters.
+    """
+    # TODO are constraints handled properly?
+    options = _get_params_dict(options_file)
+
+    lower = np.zeros(len(params), dtype=np.float64)
+    upper = np.full(len(params), np.inf, dtype=np.float64)
+
+    # Get a mapping between parameter names/specifications
+    param_dict = {x["name"]: x for x in options["parameters"]}
+
+    for ii, name in enumerate(param_names):
+        spec = param_dict[name]
+        if "lower_bound" in spec:
+            lower[ii] = spec["lower_bound"]
+        if "upper_bound" in spec:
+            upper[ii] = spec["upper_bound"]
+
+    if "constraints" in options:
+        for spec in options["constraints"]:
+            idx_0 = param_names.index(spec["params"][0])
+            idx_1 = param_names.index(spec["params"][1])
+            if spec["constraint"] == "greater_than":
+                lower[idx_0] = max(lower[idx_0], params[idx_1])
+                upper[idx_1] = min(upper[idx_1], params[idx_0])
+            elif spec["constraint"] == "less_than":
+                upper[idx_0] = min(upper[idx_0], params[idx_1])
+                lower[idx_1] = max(lower[idx_1], params[idx_0])
+            else:
+                raise ValueError("invalid constraint")
+
+    return lower, upper
 
 
 _model_cache = dict()
