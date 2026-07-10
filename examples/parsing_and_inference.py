@@ -155,19 +155,19 @@ if __name__ == "__main__":
         with open(stats_file, "rb") as f:
             boot_data = pickle.load(f)
 
-    model = h2py.H2stats.from_demes(
-        graph_file,
-        sampled_demes=list(samples.keys()),
-        u=u,
-        r_bins=r_bins,
-        phased=False
-    )
-    h2py.plotting.plot_h2_curves_comp(
-        model,
-        boot_data["means"],
-        boot_data["varcovs"],
-        r_bins=boot_data["bins"]
-    )
+    #model = h2py.H2stats.from_demes(
+    #    graph_file,
+    #    sampled_demes=list(samples.keys()),
+    #    u=u,
+    #    r_bins=r_bins,
+    #    phased=False
+    #)
+    #h2py.plotting.plot_h2_curves_comp(
+    #    model,
+    #    boot_data["means"],
+    #    boot_data["varcovs"],
+    #    r_bins=boot_data["bins"]
+    #)
 
     fit_graph_file = f"{prefix}_inferred_graph.yaml"
     h2py.inference.optimize(
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         pops=list(samples.keys()),
         r_bins=r_bins,
         u=u,
-        report=1,
+        report=10,
         max_iter=100,
         output=fit_graph_file,
         overwrite=True,

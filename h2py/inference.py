@@ -184,8 +184,8 @@ def optimize(
         else:
             _params_0 = params_0
         pstr = "".join([f"{float(p):>10.3}" for p in _params_0])
-        print(f"{'Call':<5}{'LL':>10} <{namestr}>")
-        print(f"{'init':<5}{'-':>10} <{pstr}>")
+        print(f"{'Call':<5}{'LL':>10} [{namestr}]")
+        print(f"{'init':<5}{'-':>10} [{pstr}]")
 
     # Call the selected scipy optimization function
     if method == "fmin":
