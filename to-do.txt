@@ -1,3 +1,7 @@
+General
+- make bin conventions uniform! arrays or 2-tuples?
+- make sure bootstrapping works: CIs look big?
+
 Parsing
 - insure the pairwise/multi-sample between-diploid estimators are equivalent
 to numerical accuracy

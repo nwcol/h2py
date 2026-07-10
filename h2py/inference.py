@@ -166,8 +166,8 @@ def optimize(
         sample_times,
         u,
         fit_u,
-        phased,
         r_bins,
+        phased,
         use_log,
         lower_bounds,
         upper_bounds,
@@ -179,23 +179,29 @@ def optimize(
     if report > 0:
         print(timestamp(), f"Fitting to observed H2 for {pops}")
         namestr = "".join([f"{n:>10}" for n in param_names])
-        pstr = "".join([f"{float(p):>10.3}" for p in params_0])
+        if use_log:
+            _params_0 = 10 ** (params_0 - 1)
+        else:
+            _params_0 = params_0
+        pstr = "".join([f"{float(p):>10.3}" for p in _params_0])
         print(f"{'Call':<5}{'LL':>10} <{namestr}>")
         print(f"{'init':<5}{'-':>10} <{pstr}>")
 
     # Call the selected scipy optimization function
     if method == "fmin":
-        result = scipy.optimize_fmin(
-            objective_func,
+        result = scipy.optimize.fmin(
+            _objective_func,
             params_0,
             args=args,
-            maxiter=max_iter, disp=False
+            maxiter=max_iter,
+            disp=False,
+            full_output=True,
         )
-        (params_opt, f_opt), flag = result[:2], result[5]
+        (params_opt, f_opt), flag = result[:2], result[4]
 
     elif method == "powell":
         result = scipy.optimize.fmin_powell(
-            objective_func,
+            _objective_func,
             parasms_0,
             args=args,
             maxiter=max_iter,
@@ -212,7 +218,7 @@ def optimize(
             bounds = list(zip(lower_bounds, upper_bounds))
             epsilon = 1e-3
         result = scipy.optimize.fmin_l_bfgs_b(
-            objective_func,
+            _objective_func,
             params_0,
             args=args,
             maxiter=max_iter,
@@ -225,14 +231,14 @@ def optimize(
         flag = result[2]["warnflag"]
 
     ll_opt = -f_opt
-    params_opt = np.log(params_opt) + 1 if use_log else params_opt
+    params_opt = 10 ** (params_opt - 1) if use_log else params_opt
 
     if report > 0:
         print(f"Finished with flag {flag}")
         print(f"Log-likelihood:\t{ll_opt:.4}")
         print("Fitted parameters:")
         for name, value in zip(param_names, params_opt):
-            print(f"{name}\t{value:.4}")
+            print(f"    {name}\t{value:.4}")
 
     if output is not None:
         builder = _update_builder(builder, options, params_opt)
@@ -245,7 +251,7 @@ def optimize(
         }
         graph.metadata["opt_info"] = opt_info
         if overwrite is False and os.path.isfile(output):
-            print(f"{outout} already exists; printing model")
+            print(f"{output} already exists; printing model")
             print(str(graph))
         else:
             demes.dump(graph, output)
@@ -283,6 +289,9 @@ def _objective_func(
     global _counter
     _counter += 1
 
+    if use_log:
+        params = 10 ** (params - 1)
+
     if lower_bounds is not None and np.any(params < lower_bounds):
         return OUT_OF_BOUNDS
     if upper_bounds is not None and np.any(params > upper_bounds):
@@ -290,8 +299,6 @@ def _objective_func(
     if constraints is not None and np.any(constraints(params) <= 0):
         return OUT_OF_BOUNDS
 
-    if use_log:
-        params = np.exp(log_params - 1)
     if fit_u:
         u = params[-1]
 
@@ -360,7 +367,7 @@ _inv_varcov_cache = dict()
 
 def _compute_composite_ll(model, means, varcovs):
     """Compute the sum of bin log-likelihoods."""
-    return _compute_bin_ll(model.h2, means[:-1], varcovs[:-1]).sum()
+    return _compute_bin_ll(model.h2(), means[:-1], varcovs[:-1]).sum()
 
 
 def _compute_bin_ll(xs, mus, varcovs):

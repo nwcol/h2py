@@ -443,7 +443,7 @@ def get_means_across_regions(all_data):
         for ii in range(len(numers)):
             numers[ii] += all_data[label]["sums"][ii]
             denoms[ii] += all_data[label]["denoms"][ii]
-    means = [_safe_divide(n, d) for n, d in zip(numers, denoms)]
+    means = [n / d for n, d in zip(numers, denoms)]
     return means
 
 
