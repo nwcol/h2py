@@ -20,7 +20,7 @@ from .utils import timestamp
 
 
 # =============================================================================
-# Principal functions, for uncertainty estimation and LRT adjustment
+# Principal functions for uncertainty estimation and LRT adjustment
 # =============================================================================
 
 
@@ -38,6 +38,7 @@ def compute_uncerts(
     method="GIM",
     return_matrix=False,
     report=True,
+    readout=True,
     delta=0.01,
     bounds=None,
     steps=None,
@@ -79,6 +80,8 @@ def compute_uncerts(
     return_matrix : bool, optional
         If True, return the estimated Fisher or Godambe information matrix
         (as specified by ``method``) along with minimal outputs.
+    readout : bool, optional
+        If True, print a table of estimated parameter uncertainties.
     report : bool, optional
         If True, print progress messages.
     delta : float, optional
@@ -116,8 +119,8 @@ def compute_uncerts(
 
     if method == "FIM" or method == "fisher":
         args = (means, varcovs, model_args)
-        HH = -_get_hessian_matrix(
-            params
+        HH = _get_hessian_matrix(
+            params,
             _evaluate_ll,
             args=args,
             delta=delta,
@@ -125,7 +128,7 @@ def compute_uncerts(
             bounds=bounds,
             report=report,
         )
-        FIM = np.linalg.inv(HH)
+        FIM = np.linalg.inv(-HH)
         uncerts = np.sqrt(np.diag(FIM))
         matrix = FIM
 
@@ -145,11 +148,19 @@ def compute_uncerts(
             bounds=bounds,
             report=report,
         )
-        uncerts = np.sqrt(np.diag(GIM))
+        uncerts = np.sqrt(np.diag(np.linalg.inv(GIM)))
         matrix = GIM
 
     else:
         raise ValueError("unrecognized method")
+
+    if readout:
+        print(f"Finished with method {method}")
+        print(f"Estimated uncertainties:")
+        print("    Param\tSE\t\tCI (95%)")
+        for name, val, std in zip(param_names, params, uncerts):
+            err = 1.96 * std
+            print(f"    {name}\t{std:.3}\t({val-std:.3}, {val+std:.3})")
 
     if return_matrix:
         return param_names, params, uncerts, matrix
@@ -159,7 +170,7 @@ def compute_uncerts(
 
 def compute_lrt_adjustment(
     nested_graph_file,
-    full_graph_file
+    full_graph_file,
     options_file,
     means,
     varcovs,
@@ -219,11 +230,11 @@ def compute_lrt_adjustment(
 
     HH, JJ, _ = _get_godambe_matrix(
         nested_params,
-        nesting_func,
         means,
         varcovs,
         boot_means,
         model_args,
+        func=nesting_func,
         delta=delta,
         steps=steps,
         bounds=bounds,
@@ -258,9 +269,9 @@ def _get_godambe_matrix(
     Compute the Godambe information matrix (GIM).
     """
     args = (means, varcovs, model_args)
-    HH = -_get_hessian_matrix(
+    HH = _get_hessian_matrix(
         params,
-        func,
+        func=func,
         args=args,
         delta=delta,
         steps=steps,
@@ -278,7 +289,7 @@ def _get_godambe_matrix(
         bounds=bounds,
         report=report,
     )
-    GIM = HH @ np.linalg.inv(JJ) @ HH
+    GIM = -HH @ np.linalg.inv(JJ) @ -HH
     return HH, JJ, GIM
 
 
@@ -301,9 +312,9 @@ def _get_variability_matrix(
 
     for means in boot_means:
         args = (means, varcovs, model_args)
-        score = func(
+        score = _get_score(
             params,
-            _evaluate_ll,
+            func,
             args=args,
             delta=delta,
             steps=steps,
@@ -333,9 +344,11 @@ def _get_hessian_matrix(
     Returns
     -------
     """
+    n_params = len(params)
+
     # Set up bounds if non are given
     if bounds is None:
-        bounds = (np.zeros(len(params)), np.full(len(params), np.inf))
+        bounds = (np.zeros(n_params), np.full(n_params, np.inf))
 
     # Check bounds
     if np.any(params < bounds[0]) or np.any(params > bounds[1]):
@@ -346,7 +359,7 @@ def _get_hessian_matrix(
         if np.any(steps == 0):
             steps[steps == 0] = delta
 
-    for ii in range(len(params)):
+    for ii in range(n_params):
         if np.any((params - steps < bounds[0]) & (params + steps > bounds[1])):
             raise ValueError("bounds prevent finite differences evaluation")
 
@@ -354,8 +367,7 @@ def _get_hessian_matrix(
     # Calculate the elements of the matrix by separate function calls
     for ii in range(n_params):
         for jj in range(n_params):
-            elem = _get_hessian_element(params, ii, jj, func,
-                                        args, steps, bounds)
+            elem = _get_hessian_elem(params, ii, jj, func, args, steps, bounds)
             if ii == jj:
                 hessian[ii, ii] = elem
             else:
@@ -529,12 +541,14 @@ def _get_score(
 
     Returns
     -------
-    score : np.ndarray, shape (n_params,) # TODO may change
-        Gradient.
+    score : np.ndarray, shape (n_params, 1)
+        Gradient, as a column vector.
     """
+    n_params = len(params)
+
     # Set up bounds if non are given
     if bounds is None:
-        bounds = (np.zeros(len(params)), np.full(len(params), np.inf))
+        bounds = (np.zeros(n_params), np.full(n_params, np.inf))
 
     # Check bounds
     if np.any(params < bounds[0]) or np.any(params > bounds[1]):
@@ -545,15 +559,15 @@ def _get_score(
         if np.any(steps == 0):
             steps[steps == 0] = delta
 
-    for ii in range(len(params)):
+    for ii in range(n_params):
         if np.any((params - steps < bounds[0]) & (params + steps > bounds[1])):
             raise ValueError("bounds prevent finite differences evaluation")
 
     lower, upper = bounds
-    score = np.zeros((1, len(params)), dtype=np.float64)
+    score = np.zeros((n_params, 1), dtype=np.float64)
 
-    for ii in range(len(params)):
-        e_i = _get_e_i(len(params), ii)
+    for ii in range(n_params):
+        e_i = _get_e_i(n_params, ii)
 
         # Determine which points to evaluate
         if params[ii] == 0 or  params[ii] - steps[ii] < lower[ii]:
@@ -566,17 +580,17 @@ def _get_score(
         if form == "forward":
             f_0 = func(params, *args)
             f_f = func(params + steps * e_i, *args)
-            score[:, ii] = (f_f - f_0) / steps[ii]
+            score[ii, 0] = (f_f - f_0) / steps[ii]
 
         elif form == "backward":
             f_b = func(params + steps * -e_i, *args)
             f_0 = func(params, *args)
-            score[:, ii] = (f_0 - f_b) / steps[ii]
+            score[ii, 0] = (f_0 - f_b) / steps[ii]
 
         else:
             f_b = func(params + steps * -e_i, *args)
             f_f = func(params + steps * e_i, *args)
-            score[:, ii] = (f_f - f_b) / (2 * steps[ii])
+            score[ii, 0] = (f_f - f_b) / (2 * steps[ii])
 
     return score
 

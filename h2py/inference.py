@@ -235,10 +235,11 @@ def optimize(
 
     if report > 0:
         print(f"Finished with flag {flag}")
-        print(f"Log-likelihood:\t{ll_opt:.4}")
+        print(f"Log-likelihood:\t{ll_opt:.3}")
         print("Fitted parameters:")
+        print("    Param\tMLE")
         for name, value in zip(param_names, params_opt):
-            print(f"    {name}\t{value:.4}")
+            print(f"    {name}\t{value:.3}")
 
     if output is not None:
         builder = _update_builder(builder, options, params_opt)

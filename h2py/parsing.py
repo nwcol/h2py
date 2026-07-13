@@ -411,7 +411,7 @@ def bootstrap_data(all_data):
 
     labels = list(all_data.keys())
     means = get_means_across_regions(all_data)
-    bootstrap_means = _get_bootstrap_replicates(all_data)
+    bootstrap_means = get_bootstrap_replicates(all_data)
     reshaped_means = [[m[i] for m in bootstrap_means]
                        for i in range(len(means))]
     varcovs = [np.cov(np.array(m).T) for m in reshaped_means]
@@ -493,7 +493,7 @@ def subset_data(data, to_pops=None, min_r=None, max_r=None):
 # -----------------------------------------------------------------------------
 
 
-def _get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
+def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
     """
     Draw several bootstrap replicates from a list of sums computed on genomic
     intervals.

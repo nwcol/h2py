@@ -19,7 +19,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 500
+n_reps = 50
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     #)
 
     fit_graph_file = f"{prefix}_inferred_graph.yaml"
-    h2py.inference.optimize(
+    model_fit = h2py.inference.optimize(
         graph_file,
         options_file,
         boot_data["means"],
