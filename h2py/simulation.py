@@ -49,6 +49,7 @@ def generate_genotype_probs(
     n_samples = int(haplotypes.shape[1] / 2)
     seq_len = len(seq_strs[0])
 
+    genotypes = np.zeros((seq_len, n_samples), dtype=np.int64)
     genotype_probs = np.zeros((seq_len, 3 * n_samples), dtype=np.float64)
     sample_depths = np.zeros((seq_len, n_samples))
 
@@ -56,11 +57,12 @@ def generate_genotype_probs(
         sample = haplotypes[:, 2*ii:2*(ii+1)]
 
         # 'cheat' by calculating priors with true data
-        genotypes = np.sum(sample, axis=1)
-        #priors = np.array([
-        #    np.sum(genotypes == 0),
-        #    np.sum(genotypes == 1),
-        #    np.sum(genotypes == 2)]) / len(genotypes)
+        genotypes_ii = np.sum(sample, axis=1)
+        genotypes[:, ii] = genotypes_ii
+        # priors = np.array([
+        #     np.count_nonzero(genotypes == 0),
+        #     np.count_nonzero(genotypes == 1),
+        #     np.count_nonzero(genotypes == 2)]) / len(genotypes)
 
         # p_alt = np.sum(sample) / (2 * seq_len)
         # p_ref = 1 - p_alt
@@ -78,7 +80,7 @@ def generate_genotype_probs(
         # Sample coverage depth
         depths = np.random.poisson(depth, size=seq_len)
         # Draw allele samples
-        f_alt = genotypes / 2
+        f_alt = genotypes_ii / 2
         p_alt = f_alt + (1 - 2 * f_alt) * p_err
         n_alt = np.random.binomial(depths, p_alt)
         n_ref = depths - n_alt
@@ -86,15 +88,15 @@ def generate_genotype_probs(
         genotype_liks = _compute_genotype_likelihood(n_ref, n_alt, p_err)
 
         # priors
-        p_1 = np.sum(genotypes) / (2 * seq_len)
-        p_0 = 1 - p_1
-        theta = np.sum(genotypes == 1) / seq_len
-        priors = np.array([p_0 * (1-theta) + p_0 ** 2 * theta,
-                           2 * p_0 * p_1 * theta,
-                           p_1 * (1-theta) + p_1 ** 2 * theta])
+        # p_1 = np.sum(genotypes) / (2 * seq_len)
+        # p_0 = 1 - p_1
+        # theta = np.sum(genotypes == 1) / seq_len
+        # priors = np.array([p_0 * (1-theta) + p_0 ** 2 * theta,
+        #                    2 * p_0 * p_1 * theta,
+        #                    p_1 * (1-theta) + p_1 ** 2 * theta])
 
         # Weight genotype likelihoods by the priors
-        raw_gps = genotype_liks * priors
+        raw_gps = genotype_liks
         norm = np.sum(raw_gps, axis=1)
         genotype_probs[:, 3*ii:3*(ii+1)] = raw_gps / norm[:, None]
         sample_depths[:, ii] = depths
@@ -106,10 +108,11 @@ def generate_genotype_probs(
     # Drop sites without coverage in any sample
     depth_sum = np.sum(sample_depths, axis=1)
     mask = depth_sum > 0
+    genotypes = genotypes[mask]
     genotype_probs = genotype_probs[mask]
     sites = np.where(mask)[0]
 
-    return sites, genotype_probs
+    return sites, genotypes, genotype_probs
 
 
 def _compute_genotype_likelihood(n_ref, n_alt, p_err):
@@ -147,24 +150,102 @@ def _get_sample_sequences(fasta_strs, ref_div=1e-3):
 # -----------------------------------------------------------------------------
 
 
-# TODO handle multiple samples
+def generate_sam_files(
+    ts,
+    samples,
+    path_fmt,
+    depth=10,
+    chrom=None,
+    ref_name=None,
+    ref_seq=None,
+    ref_div=1e-4,
+    read_shape=10,
+    read_scale=5,
+    qual_mean=30,
+    qual_std=5,
+    map_mean=60,
+    map_std=10,
+    report=100000,
+):
+    """
+    Generate SAM files for one or more samples using a simple read sequencing
+    model.
+
+    Expects ``samples`` to correspond in order and length to the number of
+    samples in ``ts``.
+
+    Parameters
+    ----------
+    path_fmt : str
+        Output file path pattern: 'path/to/desired/output_{sample}.vcf'. Must
+        include '{sample}'.
+    """
+    if chrom is None:
+        chrom = "chr0"
+
+    if ref_name is None:
+        ref_name = "ref"
+
+    # Generate a reference sequence if none was given
+    seq_len = int(ts.sequence_length)
+    if ref_seq is not None:
+        assert len(ref_seq) == seq_len
+        ref_seq = np.array([b for b in ref_seq])
+    else:
+        ref_seq = np.random.choice(["A", "T", "C", "G"], size=seq_len)
+
+    # Generate an ancestral sequence with specified divergence to the reference
+    anc_seq = _sample_ancestral_sequence(ref_seq, ref_div)
+
+    # Split up sampled sequences into arrays and "polarize"
+    n_samples = len(samples)
+    raw_seqs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
+    assert len(raw_seqs) / 2 == n_samples
+    sample_seqs = []
+    for idx in range(n_samples):
+        this_sample = [raw_seqs[2 * idx], raw_seqs[2 * idx + 1]]
+        this_sample = [np.array([b if b != "N" else 0 for b in seq],
+                                dtype=np.int64) for seq in this_sample]
+        this_sample = [_construct_derived_sequence(seq, anc_seq)
+                       for seq in this_sample]
+        sample_seqs.append(this_sample)
+
+    for ii, sample in enumerate(samples):
+        path = path_fmt.format(sample=sample)
+        generate_sam_file(
+            sample_seqs[ii],
+            path,
+            ref_seq,
+            ref_name=ref_name,
+            sample_name=sample,
+            chrom=chrom,
+            depth=depth,
+            read_shape=read_shape,
+            read_scale=read_scale,
+            qual_mean=qual_mean,
+            qual_std=qual_std,
+            map_mean=map_mean,
+            map_std=map_std,
+            report=report
+        )
+
+    return ref_seq
 
 
 def generate_sam_file(
-    ts,
+    sample_seqs,
     path,
     ref_seq,
     ref_name=None,
     sample_name=None,
     chrom=None,
-    ref_div=1e-4,
     depth=10,
     read_shape=10,
     read_scale=5,
-    mean_base_qual=30,
-    std_base_qual=10,
-    mean_map_qual=60,
-    std_map_qual=10,
+    qual_mean=30,
+    qual_std=10,
+    map_mean=60,
+    map_std=10,
     report=100000,
 ):
     """
@@ -173,11 +254,6 @@ def generate_sam_file(
 
     ``ts`` must result from simulation with the 'binary' mutation model.
 
-    Parameters
-    ----------
-    ref_seq : str, list, or array-like
-        Sequence of nucleotide code characters to represent the reference
-        genome. The ancestral sequence is sampled from ``ref_seq``.
     """
     # Check arguments
     if ref_name is None:
@@ -188,17 +264,6 @@ def generate_sam_file(
 
     if chrom is None:
         chrom = "chrom"
-
-    # Set up reference, ancestral, and sampled sequences
-    ref_seq = np.array([b for b in ref_seq])
-    anc_seq = _sample_ancestral_sequence(ref_seq, ref_div)
-    # TODO proper subsetting to desired sample.
-    # Currently assume one diploid.
-    raw_seq_strs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
-    raw_seq_arrs = [np.array([b if b != "N" else 0 for b in seq], dtype=np.int8)
-                    for seq in raw_seq_strs]
-    sample_seqs = [_sample_derived_sequence(seq, anc_seq)
-                   for seq in raw_seq_arrs]
 
     # Calculate the approximate number of reads required to reach `depth`
     seq_len = len(ref_seq)
@@ -234,14 +299,14 @@ def generate_sam_file(
     read_seqs = np.random.randint(0, 2, size=n_reads)
     read_strands = np.random.choice([-1, 1], size=n_reads)
 
-    map_scores = np.random.normal(mean_map_qual, std_map_qual,
+    map_scores = np.random.normal(map_mean, map_std,
                                   size=n_reads).astype(np.int64)
     map_scores[map_scores < 0] = 0
     map_scores[map_scores > 255] = 255
 
     # Sample base quality scores in blocks for efficiency
     def get_qual_block(size=1000000):
-        qual_block = np.random.normal(mean_base_qual, std_base_qual,
+        qual_block = np.random.normal(qual_mean, qual_std,
                                       size=size).astype(np.int64)
         qual_block[qual_block < 0] = 0
         qual_block[qual_block > 40] = 40
@@ -337,10 +402,10 @@ def _sample_ancestral_sequence(ref_seq, ref_div):
     return anc_seq
 
 
-def _sample_derived_sequence(subs, anc_seq):
+def _construct_derived_sequence(subs, anc_seq):
     """
     """
-    derived_seq = np.array(anc_seq)
+    derived_seq = np.array(anc_seq, copy=True)
     is_sub = np.where(subs == 1)[0]
     for idx in is_sub:
         choices = [b for b in "ACTG" if b != anc_seq[idx]]
