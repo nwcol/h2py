@@ -12,10 +12,11 @@ from . import utils, parsing
 class H2stats:
     """
     Class for holding expected H2 and heterozygosity statistics computed with
-    moments.LD.
+    ``moments.Demes.LD``.
 
     Parameters
     ----------
+
     """
 
     def __init__(self, data, pops):
@@ -73,18 +74,28 @@ class H2stats:
         return utils._h2_names(self.n_pops)
 
     def h(self, pops=None):
+        """
+        Access all H statistics, or if ``pops`` is a str or 2-tuple, access
+        the H statistic for a specific population or population pair.
+        """
+        # TODO indexing
         if pops is not None:
             return None
         else:
             return self.data[-1]
 
     def h2(self, pops=None):
+        """
+        Access all H2 statistics, or if ``pops`` is a str or 2-tuple, access
+        the H2 statistics for a specific population or population pair.
+        """
+        # TODO indexing
         if pops is not None:
             return None
         else:
             return self.data[:-1]
 
-    def h_matrix(self):
+    def pi_matrix(self):
         return
 
     def f2(self, ii, jj):

@@ -493,7 +493,7 @@ def subset_data(data, to_pops=None, min_r=None, max_r=None):
 # -----------------------------------------------------------------------------
 
 
-def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
+def get_bootstrap_replicates(all_data, n_reps=None, n_samples=None):
     """
     Draw several bootstrap replicates from a list of sums computed on genomic
     intervals.
@@ -502,7 +502,7 @@ def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
     ----------
     all_data : dict
         Maps genomic interval labels to dicts following the output of TODO
-    n_replicates : int, optional
+    n_reps : int, optional
         Number of bootstrap replicates to conduct. If None, defaults to the
         length of `all_data`.
     n_samples : int, optional
@@ -514,18 +514,18 @@ def get_bootstrap_replicates(all_data, n_replicates=None, n_samples=None):
     sets : list
         List of bootstrap sample means.
     """
-    if n_replicates is None:
-        n_replicates = len(all_data)
+    if n_reps is None:
+        n_reps = len(all_data)
     if n_samples is None:
         n_samples = len(all_data)
 
     labels = list(all_data.keys())
     all_means = []
-    for ii in range(n_replicates):
+    for ii in range(n_reps):
         sample_data = dict()
         for jj in range(n_samples):
             label = np.random.choice(labels)
-            sample_data[ii] = all_data[label]
+            sample_data[jj] = all_data[label]
         sample_means = get_means_across_regions(sample_data)
         all_means.append(sample_means)
     return all_means

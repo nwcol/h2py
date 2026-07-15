@@ -19,7 +19,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 50
+n_reps = 100
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -90,6 +90,7 @@ pop_file_content = """sample pop
 tsk_0 pop0
 tsk_1 pop1
 """
+pops = list(samples.keys())
 
 
 rec_map_file_content = f"""chrom\tPosition(bp)\tMap(cM)
@@ -119,6 +120,7 @@ def compute_stats(in_file):
         interval=[0, L],
         rec_map_file=rec_map_file,
         r_bins=r_bins,
+        report=False,
     )
     print(timestamp(), f"Parsed {in_file}")
     return sums
@@ -142,7 +144,7 @@ if __name__ == "__main__":
 
     stats_file = f"{prefix}_stats.pkl"
     # Only run simulations if the output file does not exit
-    if not os.path.isfile(stats_file):
+    if True: #not os.path.isfile(stats_file):
         graph = demes.load(graph_file)
         out_files = [f"{prefix}_{i}.vcf" for i in range(n_reps)]
         for out_file in out_files:
@@ -199,5 +201,33 @@ if __name__ == "__main__":
         boot_data["varcovs"],
         r_bins=boot_data["bins"]
     )
+
+    boot_reps = h2py.parsing.get_bootstrap_replicates(sums)
+
+    uncertssss = h2py.uncerts.compute_uncerts(
+        fit_graph_file,
+        options_file,
+        boot_data["means"],
+        boot_data["varcovs"],
+        boot_means=boot_reps,
+        pops=pops,
+        r_bins=r_bins,
+        u=u,
+        method="FIM",
+    )
+
+    uncertssss = h2py.uncerts.compute_uncerts(
+        fit_graph_file,
+        options_file,
+        boot_data["means"],
+        boot_data["varcovs"],
+        boot_means=boot_reps,
+        pops=pops,
+        r_bins=r_bins,
+        u=u,
+        method="GIM",
+    )
+
+
 
 

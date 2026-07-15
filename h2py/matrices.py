@@ -452,7 +452,7 @@ class GenotypeProbMatrix():
             Sample argument passed to ``msprime.sim_ancestry``, with form
             ``{"pop": sample_size,}``. Used to set up population map.
         """
-        sites, genotype_probs = simulation.generate_genotype_probs(
+        sites, _, genotype_probs = simulation.generate_genotype_probs(
             ts,
             seq_len=seq_len,
             depth=depth,
@@ -510,6 +510,7 @@ def read_vcf_file(
     read_genotype_probs=False,
     ac_filter=True,
     filtered=False,
+    return_raw=False,
 ):
     """
     Read sequence data from a VCF file.
@@ -539,6 +540,8 @@ def read_vcf_file(
         Allele count filter. If True (default), skip multiallelic sites.
     filtered : bool, optional
         If True (default False), skip lines where ``FILTER`` is not ``PASS``.
+    return_raw : bool, optional
+        If True, return the matrix as a list of lists.
 
     Returns
     -------
@@ -628,6 +631,7 @@ def read_vcf_file(
             if not np.all(is_sn):
                 continue
 
+            # TODO safer way to guarantee biallelic sites with GPs!
             if ac_filter:
                 if len(alleles) > 2:
                     continue
@@ -653,6 +657,9 @@ def read_vcf_file(
 
             matrix.append(matrix_row)
             positions.append(pos0)
+
+    if return_raw:
+        return matrix, positions
 
     positions = np.asarray(positions, dtype=np.int64)
 
@@ -690,8 +697,16 @@ def _parse_haplotypes(elems, sample_idx, gt_idx):
 def _parse_genotype_probs(elems, sample_idx, gp_idx):
     """Extract genotype probabilities (as strings) from a split VCF line."""
     samples = [elems[9:][i] for i in sample_idx]
+    # gp_strs = [s.split(":")[gp_idx] for s in samples]
+    # genotype_probs = [gp for gps in gp_strs for gp in gps.split(",")]
     gp_strs = [s.split(":")[gp_idx] for s in samples]
-    genotype_probs = [gp for gps in gp_strs for gp in gps.split(",")]
+    genotype_probs = []
+    for gp in gp_strs:
+        gps = gp.split(",")
+        if len(gps) == 1:
+            genotype_probs += ["-1", "-1", "-1"]
+        else:
+            genotype_probs += [p for p in gps if p != "."]
     return genotype_probs
 
 
@@ -726,11 +741,13 @@ def _convert_phred_scores(phred_arr):
     assert phred_arr.shape[1] % 3 == 0
     n_samples = int(phred_arr.shape[1] / 3)
     prob_arr = np.zeros_like(phred_arr)
-    for idx in range(n_samples):
-        start = 3 * idx
-        end = 3 * (idx + 1)
-        scores = phred_arr[:, start:end]
-        raw_probs = 10 ** (-scores / 10)
-        prob_arr[:, start:end] = raw_probs / np.sum(raw_probs, axis=1)[:, None]
+    for ii in range(n_samples):
+        sub_arr = phred_arr[:, 3 * ii: 3 * (ii + 1)]
+        probs = np.full(sub_arr.shape, -1, dtype=np.float64)
+        non_missing = np.where(np.all(sub_arr >= 0, axis=1))[0]
+        ix_grid = np.ix_(non_missing, list(range(3 * ii, 3 * (ii + 1))))
+        raw_probs = 10 ** (-sub_arr[non_missing] / 10)
+        probs[non_missing] = raw_probs / np.sum(raw_probs, axis=1)[:, None]
+        prob_arr[:, 3 * ii: 3 * (ii + 1)] = probs
     return prob_arr
 

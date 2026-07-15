@@ -11,6 +11,46 @@ from . import utils
 from .utils import timestamp
 
 
+def ts_to_haplotypes(ts):
+    seq_strs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
+    sample_seqs = _get_sample_sequences(seq_strs, ref_div=0)
+    haplotypes = np.stack(sample_seqs, axis=1)
+    return haplotypes
+
+
+def generate_read_counts(
+    ts,
+    ref_div=1e-4,
+    depth=10,
+    p_err=1e-3,
+):
+    """
+    Generate read depths using a simple model.
+    """
+    seq_len = int(ts.sequence_length)
+    seq_strs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
+    sample_seqs = _get_sample_sequences(seq_strs, ref_div=ref_div)
+    haplotypes = np.stack(sample_seqs, axis=1)
+    n_samples = int(haplotypes.shape[1] / 2)
+
+    allele_depths = np.zeros((seq_len, 2 * n_samples), dtype=np.int64)
+
+    for idx in range(n_samples):
+        genotypes = np.sum(haplotypes[:, 2 * idx:2 * (idx + 1)], axis=1)
+        depth = np.random.poisson(depth, size=seq_len)
+        f_alt = genotypes / 2
+        p_alt = f_alt + (1 - 2 * f_alt) * p_err
+        n_alt = np.random.binomial(depth, p_alt)
+        n_ref = depth - n_alt
+        allele_depths[:, 2 * idx] = n_ref
+        allele_depths[:, 2 * idx + 1] = n_alt
+
+    sites = np.where(np.sum(allele_depths, axis=1) > 0)[0]
+    allele_depths = allele_depths[sites]
+
+    return sites, allele_depths
+
+
 # -----------------------------------------------------------------------------
 # Simulate genotype probabilities directly from ts using a simple model
 # -----------------------------------------------------------------------------
@@ -188,32 +228,19 @@ def generate_sam_files(
 
     # Generate a reference sequence if none was given
     seq_len = int(ts.sequence_length)
-    if ref_seq is not None:
-        assert len(ref_seq) == seq_len
-        ref_seq = np.array([b for b in ref_seq])
-    else:
-        ref_seq = np.random.choice(["A", "T", "C", "G"], size=seq_len)
+    ref_seq = get_ref_seq(seq_len)
 
     # Generate an ancestral sequence with specified divergence to the reference
-    anc_seq = _sample_ancestral_sequence(ref_seq, ref_div)
+    anc_seq = get_anc_seq(ref_seq, p_div=ref_div)
 
     # Split up sampled sequences into arrays and "polarize"
-    n_samples = len(samples)
-    raw_seqs = ts.as_fasta(wrap_width=0).split("\n")[1::2]
-    assert len(raw_seqs) / 2 == n_samples
-    sample_seqs = []
-    for idx in range(n_samples):
-        this_sample = [raw_seqs[2 * idx], raw_seqs[2 * idx + 1]]
-        this_sample = [np.array([b if b != "N" else 0 for b in seq],
-                                dtype=np.int64) for seq in this_sample]
-        this_sample = [_construct_derived_sequence(seq, anc_seq)
-                       for seq in this_sample]
-        sample_seqs.append(this_sample)
+    sample_seqs = get_sample_seqs(ts, anc_seq)
+    diploids = [seqs for seqs in zip(sample_seqs[::2], sample_seqs[1::2])]
 
     for ii, sample in enumerate(samples):
         path = path_fmt.format(sample=sample)
         generate_sam_file(
-            sample_seqs[ii],
+            diploids[ii],
             path,
             ref_seq,
             ref_name=ref_name,
@@ -389,28 +416,62 @@ def generate_sam_file(
     return
 
 
-def _sample_ancestral_sequence(ref_seq, ref_div):
-    """Generate a sequence diverged from ``ref_seq`` by ``ref_div``."""
-    seq_len = len(ref_seq)
-    # Copy `ref_seq`
-    anc_seq = np.array(ref_seq)
-    is_diff = np.random.choice([True, False], size=seq_len,
-                               p=[ref_div, 1 - ref_div])
-    for idx in np.where(is_diff)[0]:
-        choices = [b for b in "ACTG" if b != ref_seq[idx]]
-        anc_seq[idx] = np.random.choice(choices)
+def get_ref_seq(L, pi=(0.25, 0.25, 0.25, 0.25)):
+    """
+    Randomly generate a sequence of DNA nucleotide codes.
+    """
+    return np.random.choice([b for b in "ACGT"], size=L, p=pi)
+
+
+def get_anc_seq(ref_seq, p_div=1e-4):
+    """
+    Randomly generate a sequence with some given divergence from the reference.
+    """
+    anc_seq = np.array(ref_seq, copy=True)
+    is_diff = np.random.choice([True, False], size=len(anc_seq),
+                               p=[p_div, 1 - p_div])
+    where_diff = np.where(is_diff)[0]
+    for idx in where_diff:
+        diff_bases = [b for b in "ACGT" if b != ref_seq[idx]]
+        anc_seq[idx] = np.random.choice(diff_bases)
     return anc_seq
 
 
-def _construct_derived_sequence(subs, anc_seq):
+def get_sample_seqs(ts, anc_seq):
     """
+    Construct sequences for samples using 'binary' mutations embedded in a
+    tree sequence and an ancestral sequence.
+
+    Memory-expensive: not suitable for large sample sizes!
     """
-    derived_seq = np.array(anc_seq, copy=True)
-    is_sub = np.where(subs == 1)[0]
-    for idx in is_sub:
-        choices = [b for b in "ACTG" if b != anc_seq[idx]]
-        derived_seq[idx] = np.random.choice(choices)
-    return derived_seq
+    # Quick access to possible substitutions for each ancestral state
+    sub_map = {
+        "A": ["C", "G", "T"],
+        "C": ["A", "G", "T"],
+        "G": ["A", "C", "T"],
+        "T": ["A", "C", "G"]
+    }
+
+    sample_nodes = [x.id for x in ts.nodes() if x.individual >= 0]
+    sample_seqs = [np.array(anc_seq, copy=True) for _ in sample_nodes]
+
+    for mut in ts.mutations():
+        mut_node = mut.node
+        mut_site = mut.site
+        # Get the 0-indexed position of this mutation and access the local tree
+        position = int(ts.sites_position[mut_site])
+        tree = ts.at(position)
+        # Get sample nodes descended from the node below the mutation
+        is_mut = [x for x in tree.nodes(mut_node) if x in sample_nodes]
+        # `anc_state` may be the result of an older substitution; but as long
+        # as the mutations in the input `ts` are sorted in order of decreasing
+        # age, later mutations are always nested in earlier ones.
+        anc_state = sample_seqs[is_mut[0]][position]
+        new_state = np.random.choice(sub_map[anc_state])
+        for idx in is_mut:
+            sample_seqs[idx][position] = new_state
+
+    return sample_seqs
 
 
 def _get_sam_file_header(

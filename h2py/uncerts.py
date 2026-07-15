@@ -160,7 +160,7 @@ def compute_uncerts(
         print("    Param\tSE\t\tCI (95%)")
         for name, val, std in zip(param_names, params, uncerts):
             err = 1.96 * std
-            print(f"    {name}\t{std:.3}\t({val-std:.3}, {val+std:.3})")
+            print(f"    {name}\t{std:.3}\t({val-err:.3}, {val+err:.3})")
 
     if return_matrix:
         return param_names, params, uncerts, matrix

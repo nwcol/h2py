@@ -16,7 +16,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 50
+n_reps = 25
 n_samples = 1  # per population
 u = 1.5e-8
 r = 1e-8
@@ -60,7 +60,7 @@ def run_sim(g, i):
         bed_file=bed_file,
         rec_map_file=rec_map_file,
         r_bins=r_bins,
-        report=False,
+        report=True,
     )
     print(timestamp(), f"Finished replicate {i}")
     return sums
