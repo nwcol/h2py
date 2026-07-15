@@ -107,6 +107,10 @@ def optimize(
     ll_opt : float
         Log-likelihood achieved in optimization.
     """
+    # Reset function call counter
+    global _counter
+    _counter = 0
+
     # Check for required keyword arguments
     if pops is None:
         raise ValueError("pops is required")
@@ -256,9 +260,6 @@ def optimize(
             print(str(graph))
         else:
             demes.dump(graph, output)
-
-    global counter
-    _counter = 0
 
     return param_names, params_opt, ll_opt
 

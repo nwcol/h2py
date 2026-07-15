@@ -4,8 +4,11 @@ General
 
 Matrices
 - cleaner handling of missing data/mismatching alternate alleles
+- dynamic masking and access
 
 Parsing
+- check end behavior (largest/smallest bin) to make sure no errors are biasing
+these; they often look a bit odd in simulation, maybe due to fewer observations
 - insure the pairwise/multi-sample between-diploid estimators are equivalent
 to numerical accuracy
 - integrating GP array coverage with mask/interval when parsing with GPs
@@ -30,7 +33,8 @@ are unacceptable.
     - how much does this affect estimated H2?
 
 Uncerts
-- re-implement calculators and try to get them to work.
+- fix the LRT adjustment, which currently returns negative values in my IM
+example.
 
 Tests
 

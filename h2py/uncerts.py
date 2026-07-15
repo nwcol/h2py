@@ -10,6 +10,9 @@ from moments.Demes.Inference import (
     _set_up_params_and_bounds,
     _set_up_constraints,
     _update_builder,
+    _get_value,
+    _set_value,
+    _get_deme_map,
 )
 import numpy as np
 import scipy as sp
@@ -171,7 +174,7 @@ def compute_uncerts(
 def compute_lrt_adjustment(
     nested_graph_file,
     full_graph_file,
-    options_file,
+    full_options_file,
     means,
     varcovs,
     boot_means,
@@ -181,6 +184,8 @@ def compute_lrt_adjustment(
     r_bins=None,
     u=None,
     fit_u=None, # TODO does this matter here?
+    phased=False,
+    delta=0.01,
     return_matrix=False,
     report=True,
     bounds=None,
@@ -193,48 +198,67 @@ def compute_lrt_adjustment(
     Parameters
     ----------
     nested_graph_file : str, path
-        Demes YAML file with *nested* model at MLE parameters.
+        Demes YAML file containing the nested model at MLE parameters.
     full_graph_file : str, path
-    options_file : str, path
+        Demes YAML file containing the alternate/full model at MLE parameters.
+        This model must be reducable to the nested model by setting parameters
+        ``nested_params`` to ``nested_values``.
+    full_options_file : str, path
         Parameter specification file for the *full* model. Other than the
         presence of nested parameters, this should be identical to the options
         file used to fit the nested model.
-    ...
+    means: list
+        Mean observed H2 per bin.
+    varcovs: list
+        Bin-specific covariance matrices, estimated with the bootstrap.
+    boot_means: list
+        Bootstrap sample means.
     nested_params : list
-        List of nested parameter names.
-    nested_values : array-like
-        (boundary?) values of nested parameters.
+        Nested parameter names.
+    nested_values : list
+        Values for ``nested_params`` which reduce the full model to the nested
+        model. These can be numbers or the names of other parameters.
+
+    see ``compute_uncerts`` for other parameter definitions.
 
     Returns
     -------
+    fac : float
+        Multiplicative adjustment for the observed LRT score, which is twice
+        the LL difference between nested and full models.
     """
-
-
-    """
-    the idea is to manually drop nested parameters from loaded full-model
-    options, use them to load the nested model; then drop the nested-model
-    parameters into the full model graph and edit the nested parameters to
-    match ``nested_values``.
-    """
-    # TODO setup
-    params = "TODO"
-    param_names = "TODO" # Should be a list
-
+    param_names, params, model_args = _get_nested_model_args(
+        nested_graph_file,
+        full_graph_file,
+        full_options_file,
+        nested_params=nested_params,
+        nested_values=nested_values,
+        pops=pops,
+        r_bins=r_bins,
+        u=u,
+        fit_u=fit_u,
+        phased=phased,
+    )
     nested_idx = np.array([param_names.index(p) for p in nested_params])
+    p_nest0 = params[nested_idx]
 
-    def nesting_func(p_nest, args):
+    # TODO bounds construction
+    if bounds is None:
+        bounds = (np.zeros(len(nested_idx)), np.full(len(nested_idx), np.inf))
+
+    def nested_func(p_nest, *args):
         """Adjust nested parameters only."""
         p_full = np.array(params, copy=True)
-        p_full[nexted_idx] = p_nest
+        p_full[nested_idx] = p_nest
         return _evaluate_ll(p_full, *args)
 
     HH, JJ, _ = _get_godambe_matrix(
-        nested_params,
+        p_nest0,
+        nested_func,
         means,
         varcovs,
         boot_means,
         model_args,
-        func=nesting_func,
         delta=delta,
         steps=steps,
         bounds=bounds,
@@ -619,6 +643,78 @@ def _get_model_args(
     builder = _get_demes_dict(graph_file)
     options = _get_params_dict(options_file)
     param_names, params = _set_up_params_and_bounds(options, builder)[:2]
+
+    deme_names = [d["name"] for d in builder["demes"]]
+    sample_times = []
+    for pop in pops:
+        assert pop in deme_names
+        idx = deme_names.index(pop)
+        end_time = builder["demes"][idx]["epochs"][-1]["end_time"]
+        sample_times.append(end_time)
+    sampled_demes = pops
+
+    args = (
+        builder,
+        options,
+        sampled_demes,
+        sample_times,
+        u,
+        fit_u,
+        r_bins,
+        phased,
+    )
+    return param_names, params, args
+
+
+def _get_nested_model_args(
+    nested_graph_file,
+    full_graph_file,
+    full_options_file,
+    nested_params=[],
+    nested_values=[],
+    pops=None,
+    r_bins=None,
+    u=None,
+    fit_u=False,
+    phased=False,
+):
+    """
+    Load model arguments for the LRT adjustment.
+
+    """
+    # Check for required keyword arguments
+    if pops is None:
+        raise ValueError("pops is required")
+    if r_bins is None:
+        raise ValueError("r_bins is required")
+    if u is None:
+        raise ValueError("u is required")
+
+    # Construct the full model at nested MLE parameters
+    nested_builder = _get_demes_dict(nested_graph_file)
+    full_builder = _get_demes_dict(full_graph_file)
+    options = _get_params_dict(full_options_file)
+    param_dict = {x["name"]: x for x in options["parameters"]}
+    param_names = []
+    params = []
+    for spec in options["parameters"]:
+        if spec["name"] in nested_params:
+            param_names.append(spec["name"])
+            idx = nested_params.index(spec["name"])
+            val = nested_values[idx]
+            if isinstance(val, str):
+                if val in param_dict:
+                    spec = param_dict[val]
+                    params.append(_get_value(nested_builder, spec["values"]))
+                else:
+                    raise ValueError("")
+            else:
+                params.append(nested_values[idx])
+        else:
+            param_names.append(spec["name"])
+            params.append(_get_value(nested_builder, spec["values"]))
+    params = np.array(params)
+    builder = _update_builder(full_builder, options, params)
 
     deme_names = [d["name"] for d in builder["demes"]]
     sample_times = []

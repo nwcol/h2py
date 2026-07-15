@@ -3,3 +3,4 @@ h2py.egg-info/
 **/.ipynb_checkpoints/
 temp_examples/
 examples/data/
+tests/data/
