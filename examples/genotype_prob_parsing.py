@@ -16,13 +16,13 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 25
+n_reps = 50
 n_samples = 1  # per population
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
-depth = 5
-p_err = 1e-3
+depth = 30
+p_err = 1e-4
 
 
 # File names
@@ -34,9 +34,8 @@ bed_file = "data/coverage.bed"
 def demographic_model():
     b = demes.Builder()
     b.add_deme("anc", epochs=[dict(start_size=1e4, end_time=4e3)])
-    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=2e4)])
-    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=5e3)])
-    b.add_migration(demes=["pop0", "pop1"], rate=1e-4)
+    b.add_deme("pop0", ancestors=["anc"], epochs=[dict(start_size=1e4)])
+    b.add_deme("pop1", ancestors=["anc"], epochs=[dict(start_size=1e4)])
     g = b.resolve()
     return g
 
@@ -99,7 +98,7 @@ if __name__ == "__main__":
         model,
         boot_data["means"],
         boot_data["varcovs"],
-        r_bins=boot_data["bins"]
+        r_bins=r_bins,
     )
 
     print(boot_data["means"][-1])

@@ -18,7 +18,7 @@ if not os.path.isdir("data/"):
 
 
 # Simulation parameters
-L = 1_000_000
+L = 5_000_000
 n_reps = 100
 u = 1.5e-8
 r = 1e-8

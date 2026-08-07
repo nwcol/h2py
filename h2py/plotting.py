@@ -15,6 +15,7 @@ def plot_h2_curves_comp(
     varcovs,
     stats=None,
     stats_to_plot=None,
+    plot_errs=True,
     labels=None,
     pops=None,
     r_bins=None,
@@ -46,7 +47,7 @@ def plot_h2_curves_comp(
     elif cols is None:
         cols = int(np.ceil(len(stats_to_plot) / rows))
 
-    xs = np.mean(r_bins, axis=1)
+    xs = (r_bins[1:] + r_bins[:-1]) / 2
 
     fig, axs = plt.subplots(rows, cols, figsize=fig_size, layout="tight")
     f_axs = axs.flat
@@ -54,11 +55,12 @@ def plot_h2_curves_comp(
     for ii, (ax_stats, ax_labels) in enumerate(zip(stats_to_plot, labels)):
         ax = f_axs[ii]
 
-        for stat in ax_stats:
-            idx = stats.index(stat)
-            data = np.array([m[idx] for m in means[:-1]])
-            data_err = 1.96*np.array([v[idx, idx] for v in varcovs[:-1]])**0.5
-            ax.fill_between(xs, data - data_err, data + data_err, alpha=0.3)
+        if plot_errs:
+            for stat in ax_stats:
+                idx = stats.index(stat)
+                data = np.array([m[idx] for m in means[:-1]])
+                data_err = 1.96*np.array([v[idx, idx] for v in varcovs[:-1]])**0.5
+                ax.fill_between(xs, data - data_err, data + data_err, alpha=0.3)
 
         ax.set_prop_cycle(None)
         for stat in ax_stats:

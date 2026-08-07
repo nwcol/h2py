@@ -481,7 +481,7 @@ class GenotypeProbMatrix():
         """
         Load genotype probabilities from a VCF file.
         """
-        genotype_probs, positions, pop_map = read_vcf_file(
+        raw_probs, positions, pop_map = read_vcf_file(
             vcf_file,
             mask=mask,
             bed_file=bed_file,
@@ -491,6 +491,7 @@ class GenotypeProbMatrix():
             read_genotype_probs=True,
             filtered=filtered,
         )
+        genotype_probs = _convert_phred_scores(raw_probs)
         return cls(genotype_probs, positions, pop_map)
 
 
@@ -671,7 +672,7 @@ def read_vcf_file(
 
     if read_genotype_probs:
         matrix = np.asarray(matrix, dtype=np.float64)
-        matrix = _convert_phred_scores(matrix)
+        # matrix = _convert_phred_scores(matrix)
     else:
         matrix = np.asarray(matrix, dtype=np.int64)
         if not phased:

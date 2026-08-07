@@ -99,10 +99,10 @@ def generate_genotype_probs(
         # 'cheat' by calculating priors with true data
         genotypes_ii = np.sum(sample, axis=1)
         genotypes[:, ii] = genotypes_ii
-        # priors = np.array([
-        #     np.count_nonzero(genotypes == 0),
-        #     np.count_nonzero(genotypes == 1),
-        #     np.count_nonzero(genotypes == 2)]) / len(genotypes)
+        priors = np.array([
+            np.count_nonzero(genotypes == 0),
+            np.count_nonzero(genotypes == 1),
+            np.count_nonzero(genotypes == 2)]) / len(genotypes)
 
         # p_alt = np.sum(sample) / (2 * seq_len)
         # p_ref = 1 - p_alt
@@ -136,7 +136,7 @@ def generate_genotype_probs(
         #                    p_1 * (1-theta) + p_1 ** 2 * theta])
 
         # Weight genotype likelihoods by the priors
-        raw_gps = genotype_liks
+        raw_gps = genotype_liks * priors
         norm = np.sum(raw_gps, axis=1)
         genotype_probs[:, 3*ii:3*(ii+1)] = raw_gps / norm[:, None]
         sample_depths[:, ii] = depths

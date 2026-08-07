@@ -41,6 +41,7 @@ def compute_h2_stats(
     rec_map_file=None,
     r_bins=None,
     bp_bins=None,
+    r=None,
     min_bp=None,  #TODO
     max_bp=None,  #TODO
     mut_map_file=None,  #TODO
@@ -240,12 +241,15 @@ def compute_h2_stats(
 
     # Load recombination map data and check bins
     if r_bins is not None:
-        if rec_map_file is None:
-            raise ValueError("rec_map_file is required")
+        if r is None:
+            if rec_map_file is None:
+                raise ValueError("rec_map_file is required")
+            coords = _get_map_coords(rec_map_file, matrix.positions)
+        else:
+            coords = r * matrix.positions
         # Transform bin units to allow direct comparison to a genetic map
         init_bins = r_bins
         bins = utils._map_function(np.array(r_bins))
-        coords = _get_map_coords(rec_map_file, matrix.positions)
         if compute_denoms and not use_genotype_probs:
             if mask is not None:
                 all_pos = mask.to_positions()
@@ -254,7 +258,10 @@ def compute_h2_stats(
                     raise ValueError(
                         "`interval` or `mask` required to compute denoms")
                 all_pos = np.arange(interval[0], interval[1])
-            all_coords = _get_map_coords(rec_map_file, all_pos)
+            if r is None:
+                all_coords = _get_map_coords(rec_map_file, all_pos)
+            else:
+                all_coords = r * all_pos
         if report:
             print(timestamp(), "Loaded map coordinates",
                   f"({coords[0]:.4} to {coords[-1]:.4} M)")
