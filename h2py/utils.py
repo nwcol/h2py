@@ -8,13 +8,33 @@ import pandas
 
 
 def _read_mut_map_file(
-    mut_map_file,
+    filename,
+    mut_col=None,
+    L=None,
 ):
-    return
+    """
+    """
+    if filename.endswith(".npy"):
+        site_map = np.load(filename)
+    else:
+        table = pandas.read_table(filename, sep=None, engine="python")
+        starts = np.array(table["chromStart"])
+        ends = np.array(table["chromEnd"])
+        rates = np.array(table["mutRate"])
+        site_map = np.full(ends[-1], np.nan, dtype=np.float64)
+        for start, end, rate in zip(starts, ends, rates):
+            site_map[start:end] = rate
+    if L is not None:
+        if L < len(site_map):
+            site_map = site_map[:L]
+        elif L > len(site_map):
+            extension = np.full(L - len(site_map), np.nan)
+            site_map = np.concatenate([site_map, extension])
+    return site_map
 
 
 def _read_rec_map_file(
-    rec_map_file,
+    filename,
     pos_col=None,
     map_col=None,
     sep=None,
@@ -33,7 +53,7 @@ def _read_rec_map_file(
         map_col = "Map(cM)"
 
     if sep is None:
-        df = pandas.read_csv(rec_map_file, sep="\\s+")
+        df = pandas.read_csv(filename, sep="\\s+")
 
     pos = np.array(df[pos_col], dtype=np.int64)
     coords = np.array(df[map_col], dtype=np.float64)

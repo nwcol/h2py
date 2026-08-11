@@ -1208,8 +1208,10 @@ def _get_map_coords(rec_map_file, positions):
 
 def _get_mut_rates(mut_map_file, positions):
     """Assign mutation rates to positions."""
-    mut_map = utils._read_mut_map_file(mut_map_file)
-    return mut_map[positions]
+    mut_map = utils._read_mut_map_file(mut_map_file, L=positions[-1] + 1)
+    ret = mut_map[positions]
+    assert not np.any(np.isnan(ret))
+    return ret
 
 
 def _get_bed_file_positions(bed_file, interval=None):
