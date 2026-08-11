@@ -45,12 +45,39 @@ class TestTableLoading:
         assert np.all(loaded_map == expected)
 
     def test_csv_case(self):
-        pass
+        filename = "data/mutation_map.csv"
+        df = pandas.DataFrame(
+            {"chromStart": [0, 10, 20],
+             "chromEnd": [10, 20, 30],
+             "mutRate": [1e-8, 1.11e-8, 1.09e-8]}
+        )
+        df.to_csv(filename)
+        loaded_map = h2py.utils._read_mut_map_file(filename)
+        expected = np.concatenate([[1e-8] * 10, [1.11e-8] * 10, [1.09e-8] * 10])
+        assert np.all(loaded_map == expected)
 
     def test_missing_data(self):
-        pass
+        filename = "data/missing_data_mutation_map.csv"
+        df = pandas.DataFrame(
+            {"chromStart": [0, 10, 20],
+            "chromEnd": [10, 20, 30],
+            "mutRate": [1e-8, np.nan, 1.09e-8]}
+        )
+        df.to_csv(filename)
+        loaded_map = h2py.utils._read_mut_map_file(filename)
+        expected = np.concatenate([[1e-8] * 10, [np.nan] * 10, [1.09e-8] * 10])
+        assert len(loaded_map) == 30
+        assert np.all(np.isnan(loaded_map[10:20]))
 
     def test_implicit_missing_data(self):
-        pass
-
+        filename = "data/gap_mutation_map.csv"
+        df = pandas.DataFrame(
+            {"chromStart": [0, 20],
+             "chromEnd": [10, 30],
+             "mutRate": [1e-8, 1.09e-8]}
+        )
+        df.to_csv(filename)
+        loaded_map = h2py.utils._read_mut_map_file(filename)
+        assert len(loaded_map) == 30
+        assert np.all(np.isnan(loaded_map[10:20]))
 

@@ -76,6 +76,8 @@ class GeneticMask:
         """
         Initialize from an array of BED-style (0-indexed, half-open) intervals.
         """
+        intervals = np.asarray(intervals, dtype=np.int64)
+
         if chrom_end is not None and interval is not None:
             raise ValueError("pass either chrom_end or interval")
 
@@ -145,12 +147,24 @@ class GeneticMask:
                 fout.write(line)
         return
 
+    def add_flank(self, flank, chrom_end=None, offset=None, interval=None):
+        """
+        Return a new instance where accessible windows are extended by
+        ``flank`` bp.
+        """
+        intervals = self.to_intervals()
+        intervals[:, 0] -= flank
+        intervals[:, 1] += flank
+        intervals[intervals < 0] = 0
+        return GeneticMask.from_intervals(intervals, chrom_end=chrom_end,
+                                          offset=offset, interval=interval)
 
-def parse_bed_file():
+
+def parse_bed_file(bed_file, chromosome=None):
     """
     Instantiate a GeneticMask instance.
     """
-    return
+    return GeneticMask.from_bed_file(bed_file, chromosome=chromosome)
 
 
 def _read_bed_file(bed_file, chromosome=None):
