@@ -14,9 +14,10 @@ if not os.path.isdir("data/"):
 
 
 # Simulation parameters
-L = 50_000_000
-intervals = [[i*1000000, (i+1)*1000000] for i in range(50)]
-n_reps = 10
+L = 51_000_000
+ws = 5_000_000
+intervals = [[i*ws, (i+1)*ws] for i in range(int(L//ws) + 1)]
+n_reps = 1
 u = 1.2432e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -124,7 +125,6 @@ def compute_stats(in_file):
             mut_map_file=mut_map_file,
             r_bins=r_bins,
             report=True,
-            u_bar=u,
         )
     print(timestamp(), f"Parsed {in_file}")
     return sums
@@ -149,6 +149,7 @@ if __name__ == "__main__":
         f.write(options_file_content)
     with open(rec_map_file, "w") as f:
         f.write(rec_map_file_content)
+
     with open(pop_file, "w") as f:
         f.write(pop_file_content)
 
@@ -161,6 +162,18 @@ if __name__ == "__main__":
         _sums = compute_stats(out_file)
         for x in _sums:
             sums[f"{i}_{x}"] = _sums[x]
+
+    nonzero_sums = {}
+    for label in sums:
+        if sums[label]["denoms"][-1] > 0:
+            nonzero_sums[label] = sums[label]
+    sums = nonzero_sums
+
+    u, n_sites = h2py.parsing.compute_avg_u(sums)
+    print(u, n_sites)
+    for label in sums:
+        for i in range(len(sums[label]["sums"]) - 1):
+            sums[label]["sums"][i] *= 1 / u**2
     boot_data = h2py.parsing.bootstrap_data(sums)
 
     model = h2py.H2stats.from_demes(

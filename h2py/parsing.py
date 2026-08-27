@@ -42,10 +42,10 @@ def compute_h2_stats(
     r_bins=None,
     bp_bins=None,
     r=None,
-    min_bp=None,  #TODO
-    max_bp=None,  #TODO
-    mut_map_file=None,  #TODO
-    u_bar=None,  #TODO
+    min_bp=None,
+    max_bp=None,
+    mut_map_file=None,
+    u_bar=1,
     use_genotype_probs=False,
     use_haplotypes=False,
     report=True,
@@ -292,7 +292,7 @@ def compute_h2_stats(
     if len(all_coords) == 0:
         dummy = [0 for _ in range(len(bins))]
         return {"pops": pops, "stats": stats_to_compute, "bins": bin_tuples,
-            "sums": dummy, "denoms": dummy}
+                "sums": dummy, "denoms": dummy, "u_avg": 0}
 
     # Prepare some specifications for estimation
     if pops is None:
@@ -301,6 +301,8 @@ def compute_h2_stats(
     if stats_to_compute is None:
         n_pops = len(pops)
         stats_to_compute = (utils._h2_names(n_pops), utils._h_names(n_pops))
+
+    u_avg = None
 
     if len(matrix.positions) > 0:
         # Load mutation map data
@@ -358,6 +360,13 @@ def compute_h2_stats(
     if compute_denoms:
         if report:
             print(timestamp(), "Computing denominators ...")
+
+        if mut_map_file is not None:
+            full_mut_map = _get_mut_rates(mut_map_file, all_pos)
+            u_avg = np.mean(full_mut_map)
+        else:
+            u_avg = None
+
         denoms = _compute_h2_denoms(
             all_coords,
             bins,
@@ -370,12 +379,13 @@ def compute_h2_stats(
             print(timestamp(), "Computed denominators.")
     else:
         denoms_list = None
+        u_avg = None
 
     if report:
         print(timestamp(), "    Done!")
 
     return {"pops": pops, "stats": stats_to_compute, "bins": bin_tuples,
-            "sums": sums_list, "denoms": denoms_list}
+            "sums": sums_list, "denoms": denoms_list, "u_avg": u_avg}
 
 
 def compute_h2_denoms(
@@ -443,7 +453,7 @@ def bootstrap_data(all_data):
             "bins": template["bins"], "means": means, "varcovs": varcovs}
 
 
-def get_means_across_regions(all_data):
+def get_means_across_regions(all_data, compute_u_fac=False):
     """
     Compute mean statistics across several genomic intervals.
 
@@ -457,14 +467,48 @@ def get_means_across_regions(all_data):
     means : list, length n_bins
     """
     labels = list(all_data.keys())
+
+    if compute_u_fac:
+        n_sites = 0
+        u_tot = 0.0
+        for label in labels:
+            n_sites_window = all_data[label]["denoms"][-1]
+            if n_sites_window is None:
+                continue
+            n_sites += n_sites_window
+            u_tot += all_data[label]["avg_u"] * n_sites_window
+        u_avg = u_tot / n_sites
+        fac = 1 / u_avg ** 2
+        print(timestamp(), "Computed u_fac = {u_fac:.4}")
+    else:
+        fac = 1.0
+
     numers = [0.0 * row for row in all_data[labels[0]]["sums"]]
     denoms = [0.0 * row for row in all_data[labels[0]]["denoms"]]
     for label in labels:
         for ii in range(len(numers)):
             numers[ii] += all_data[label]["sums"][ii]
             denoms[ii] += all_data[label]["denoms"][ii]
-    means = [n / d for n, d in zip(numers, denoms)]
-    return means
+    means = [n * fac / d for n, d in zip(numers, denoms)]
+
+    if compute_u_fac:
+        return means, u_avg
+    else:
+        return means
+
+
+def compute_avg_u(all_data):
+    labels = labels = list(all_data.keys())
+    n_sites = 0
+    u_tot = 0.0
+    for label in labels:
+        n_sites_window = all_data[label]["denoms"][-1]
+        if n_sites_window == 0:
+            continue
+        n_sites += n_sites_window
+        u_tot += all_data[label]["u_avg"] * n_sites_window
+    u_avg = u_tot / n_sites
+    return u_avg, n_sites
 
 
 def subset_data(data, to_pops=None, min_r=None, max_r=None):
