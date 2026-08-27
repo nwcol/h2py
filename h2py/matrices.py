@@ -562,7 +562,7 @@ def read_vcf_file(
         raise ValueError("cannot use both `mask` and `bed_file`")
 
     if bed_file is not None:
-        mask = GeneticMask.from_bed_file(bed_file)
+        mask = GeneticMask.from_bed_file(bed_file, interval=interval)
 
     # Replace `GeneticMask` instance with boolean array starting at position 0
     if mask is not None:
@@ -620,9 +620,9 @@ def read_vcf_file(
                     break
 
             if mask is not None:
-                if pos0 >= len(mask):
+                if pos0 >= len(mask_arr):
                     break
-                if not mask[pos0]:
+                if mask_arr[pos0] == 0:
                     continue
 
             # Check whether the site passes filters
@@ -659,8 +659,15 @@ def read_vcf_file(
             matrix.append(matrix_row)
             positions.append(pos0)
 
+    # Generate mapping between pop labels and indices of diploids in ``matrix``
+    pop_map = {pop: [sample_idx.index(idx) for idx in pop_idx[pop]]
+        for pop in pop_idx}
+
     if return_raw:
         return matrix, positions
+
+    if len(positions) == 0:
+        return np.zeros((0, len(sample_idx))), np.zeros(0), pop_map
 
     positions = np.asarray(positions, dtype=np.int64)
 
@@ -679,10 +686,6 @@ def read_vcf_file(
             if not ac_filter:
                 raise ValueError("TODO post-hoc filter for biallelic sites")
             matrix = matrix[:, ::2] + matrix[:, 1::2]
-
-    # Generate mapping between pop labels and indices of diploids in ``matrix``
-    pop_map = {pop: [sample_idx.index(idx) for idx in pop_idx[pop]]
-               for pop in pop_idx}
 
     return matrix, positions, pop_map
 

@@ -236,6 +236,8 @@ def compute_h2_stats(
             )
         else:
             matrix = genotype_matrix
+            if mask is not None:
+                matrix.apply_mask(mask)
     if report:
         print(timestamp(), f"Prepared {matrix}")
 
@@ -263,8 +265,11 @@ def compute_h2_stats(
             else:
                 all_coords = r * all_pos
         if report:
-            print(timestamp(), "Loaded map coordinates",
-                  f"({coords[0]:.4} to {coords[-1]:.4} M)")
+            if len(all_coords) > 0:
+                print(timestamp(), "Loaded map coordinates",
+                    f"({all_coords[0]:.4} to {all_coords[-1]:.4} M)")
+            else:
+                print(timestamp(), "Loaded 0 map coordinates (empty window)")
     else:
         if bp_bins is None:
             raise ValueError("r_bins or bp_bins is required")
@@ -282,16 +287,12 @@ def compute_h2_stats(
             print(timestamp(),
                   f"Using physical positions ({coords[0]} to {coords[-1]} bp)")
 
-    # Load mutation map data
-    if mut_map_file is not None:
-        mut_map = _get_mut_rates(mut_map_file, matrix.positions)
-        if u_bar is None:
-            u_bar = np.mean(mut_map)
-            if report:
-                print("  Using u_bar = {u_bar:.4}")
-        weights = mut_map / u_bar
-    else:
-        weights = None
+    bin_tuples = _get_bin_tuples(init_bins)
+
+    if len(all_coords) == 0:
+        dummy = [0 for _ in range(len(bins))]
+        return {"pops": pops, "stats": stats_to_compute, "bins": bin_tuples,
+            "sums": dummy, "denoms": dummy}
 
     # Prepare some specifications for estimation
     if pops is None:
@@ -301,62 +302,74 @@ def compute_h2_stats(
         n_pops = len(pops)
         stats_to_compute = (utils._h2_names(n_pops), utils._h_names(n_pops))
 
-    # Genotype probability pathway
-    if use_genotype_probs:
-        if report:
-            print(timestamp(), "Computing statistics and denominators ...")
-        sums_list, denoms_list = _call_genotype_prob_h2_estimators(
-            matrix,
-            coords,
-            bins,
-            pops,
-            stats_to_compute,
-            weights=weights,
-            pos=matrix.positions,
-            min_bp=min_bp,
-            max_bp=max_bp
-        )
-        if report:
-            print(timestamp(), "Computed statistics and denominators.")
-    # Genotype/haplotype pathway
-    else:
-        if report:
-            print(timestamp(), "Computing statistics ...")
-        if pairwise:
-            sums_list = _call_pairwise_h2_estimators(
+    if len(matrix.positions) > 0:
+        # Load mutation map data
+        if mut_map_file is not None:
+            mut_map = _get_mut_rates(mut_map_file, matrix.positions)
+            if u_bar is None:
+                u_bar = np.mean(mut_map)
+                if report:
+                    print(timestamp(), f"  Using u_bar = {u_bar:.4}")
+            weights = mut_map / u_bar
+        else:
+            weights = None
+
+        # Genotype probability pathway
+        if use_genotype_probs:
+            if report:
+                print(timestamp(), "Computing statistics and denominators ...")
+            sums_list, denoms_list = _call_genotype_prob_h2_estimators(
                 matrix,
                 coords,
                 bins,
                 pops,
                 stats_to_compute,
                 weights=weights,
-                use_haplotypes=use_haplotypes,
                 pos=matrix.positions,
                 min_bp=min_bp,
-                max_bp=max_bp,
+                max_bp=max_bp
             )
+            if report:
+                print(timestamp(), "Computed statistics and denominators.")
+        # Genotype/haplotype pathway
         else:
-            sums_list = _call_pooled_h2_estimators()
+            if report:
+                print(timestamp(), "Computing statistics ...")
+            if pairwise:
+                sums_list = _call_pairwise_h2_estimators(
+                    matrix,
+                    coords,
+                    bins,
+                    pops,
+                    stats_to_compute,
+                    weights=weights,
+                    use_haplotypes=use_haplotypes,
+                    pos=matrix.positions,
+                    min_bp=min_bp,
+                    max_bp=max_bp,
+                )
+            else:
+                sums_list = _call_pooled_h2_estimators()
+            if report:
+                print(timestamp(), "Computed statistics.")
+    else:
+        sums_list = [0 for _ in range(len(bins))]
+
+    if compute_denoms:
         if report:
-            print(timestamp(), "Computed statistics.")
-
-        if compute_denoms:
-            if report:
-                print(timestamp(), "Computing denominators ...")
-            denoms = _compute_h2_denoms(
-                all_coords,
-                bins,
-                pos=all_pos,
-                min_bp=min_bp,
-                max_bp=max_bp,
-            )
-            denoms_list = [row for row in denoms]
-            if report:
-                print(timestamp(), "Computed denominators.")
-        else:
-            denoms_list = None
-
-    bin_tuples = _get_bin_tuples(init_bins)
+            print(timestamp(), "Computing denominators ...")
+        denoms = _compute_h2_denoms(
+            all_coords,
+            bins,
+            pos=all_pos,
+            min_bp=min_bp,
+            max_bp=max_bp,
+        )
+        denoms_list = [row for row in denoms]
+        if report:
+            print(timestamp(), "Computed denominators.")
+    else:
+        denoms_list = None
 
     if report:
         print(timestamp(), "    Done!")

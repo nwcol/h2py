@@ -47,7 +47,8 @@ def plot_h2_curves_comp(
     elif cols is None:
         cols = int(np.ceil(len(stats_to_plot) / rows))
 
-    xs = (r_bins[1:] + r_bins[:-1]) / 2
+    # Bins are expected to be a list of 2-tuples specifying bin edges.
+    xs = np.mean(r_bins, axis=1)
 
     fig, axs = plt.subplots(rows, cols, figsize=fig_size, layout="tight")
     f_axs = axs.flat
