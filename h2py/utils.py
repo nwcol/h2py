@@ -55,8 +55,8 @@ def _read_rec_map_file(
     if sep is None:
         df = pandas.read_csv(filename, sep="\\s+")
 
-    pos = np.array(df[pos_col], dtype=np.int64)
-    coords = np.array(df[map_col], dtype=np.float64)
+    pos = np.array(df[df.columns[1]], dtype=np.int64)
+    coords = np.array(df[df.columns[3]], dtype=np.float64)
 
     if unit == "cM":
         coords *= 0.01
