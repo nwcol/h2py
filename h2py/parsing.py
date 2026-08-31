@@ -312,7 +312,7 @@ def compute_h2_stats(
                 u_bar = np.mean(mut_map)
                 if report:
                     print(timestamp(), f"  Using u_bar = {u_bar:.4}")
-            weights = mut_map / u_bar
+            weights = u_bar / mut_map
         else:
             weights = None
 
