@@ -1,0 +1,19 @@
+# test imports from apptainer container
+
+universe = vanilla
+log = log/$(Cluster).log
+error = log/$(Cluster).err
+output = log/$(Cluster).out
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/h2py-container.sif
+
+executable = test_container.sh
+
+transfer_input_files = test_container.py
+
+request_cpus = 1
+request_memory = 1GB
+request_disk = 1GB
+
+queue 1

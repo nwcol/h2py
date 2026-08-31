@@ -2,6 +2,7 @@
 Diverse utilities.
 """
 
+import gzip
 from datetime import datetime
 import numpy as np
 import pandas
@@ -16,6 +17,9 @@ def _read_mut_map_file(
     """
     if filename.endswith(".npy"):
         site_map = np.load(filename)
+    elif filename.endswith(".npy.gz"):
+        with gzip.open(filename, "rb") as fin:
+            site_map = np.load(fin)
     else:
         table = pandas.read_table(filename, sep=None, engine="python")
         starts = np.array(table["chromStart"])
@@ -35,9 +39,8 @@ def _read_mut_map_file(
 
 def _read_rec_map_file(
     filename,
-    pos_col=None,
-    map_col=None,
-    sep=None,
+    pos_col="Position(bp)",
+    map_col="Map(cM)",
     unit="cM",
 ):
     """
@@ -48,15 +51,13 @@ def _read_rec_map_file(
     """
     if pos_col is None:
         pos_col = "Position(bp)"
-
     if map_col is None:
         map_col = "Map(cM)"
 
-    if sep is None:
-        df = pandas.read_csv(filename, sep="\\s+")
+    df = pandas.read_csv(filename, engine="python", sep=None)
 
-    pos = np.array(df[df.columns[1]], dtype=np.int64)
-    coords = np.array(df[df.columns[3]], dtype=np.float64)
+    pos = np.array(df[pos_col], dtype=np.int64)
+    coords = np.array(df[map_col], dtype=np.float64)
 
     if unit == "cM":
         coords *= 0.01

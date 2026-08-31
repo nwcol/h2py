@@ -39,6 +39,8 @@ def compute_h2_stats(
     chromosome=None,
     interval=None,
     rec_map_file=None,
+    rec_pos_col="Position(bp)",
+    rec_map_col="Map(cM)",
     r_bins=None,
     bp_bins=None,
     r=None,
@@ -246,7 +248,8 @@ def compute_h2_stats(
         if r is None:
             if rec_map_file is None:
                 raise ValueError("rec_map_file is required")
-            coords = _get_map_coords(rec_map_file, matrix.positions)
+            coords = _get_map_coords(rec_map_file, matrix.positions,
+                                     rec_pos_col, rec_map_col)
         else:
             coords = r * matrix.positions
         # Transform bin units to allow direct comparison to a genetic map
@@ -261,7 +264,8 @@ def compute_h2_stats(
                         "`interval` or `mask` required to compute denoms")
                 all_pos = np.arange(interval[0], interval[1])
             if r is None:
-                all_coords = _get_map_coords(rec_map_file, all_pos)
+                all_coords = _get_map_coords(rec_map_file, all_pos,
+                                             rec_pos_col, rec_map_file)
             else:
                 all_coords = r * all_pos
         if report:
@@ -1256,9 +1260,10 @@ def _get_bin_tuples(bins):
     return unfolded_bins
 
 
-def _get_map_coords(rec_map_file, positions):
+def _get_map_coords(rec_map_file, positions, pos_col, map_col):
     """Assign map coordinates to positions by loading a recombination map."""
-    map_pos, map_coords = utils._read_rec_map_file(rec_map_file)
+    map_pos, map_coords = utils._read_rec_map_file(
+        rec_map_file, pos_col=pos_col, map_col=map_col)
     # Assume that recombination map positions are 1-indexed
     return np.interp(positions + 1, map_pos, map_coords)
 

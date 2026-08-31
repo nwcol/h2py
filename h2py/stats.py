@@ -136,6 +136,15 @@ class H2stats:
         if sampled_demes is None:
             raise ValueError("`sampled_demes` is required")
 
+        if r_bins is not None:
+            # Convert from [(lower0, upper0), (lower1, upper1) ... ] format
+            if isinstance(r_bins, list):
+                bins_arr = np.zeros(len(r_bins) + 1)
+                for i, bin_tuple in enumerate(r_bins):
+                    bins_arr[i] = bin_tuple[0]
+                bins_arr[-1] = r_bins[-1][1]
+                r_bins = bins_arr
+
         def model_func(_r):
             """Compute H2 at given recombination distances."""
             ld_stats = moments.Demes.LD(graph, sampled_demes, r=_r, u=u,
@@ -158,7 +167,7 @@ class H2stats:
             return ret
 
         if rs is not None and r_bins is None:
-            data = model_func(r)
+            data = model_func(rs)
 
         elif rs is None and r_bins is not None:
             if method == "midpoint":

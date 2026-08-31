@@ -1,0 +1,15 @@
+universe = vanilla
+log = log/$(Cluster).log
+error = log/$(Cluster).err
+output = log/$(Cluster).out
+
+executable = /usr/bin/hostname
+
+transfer_input_files = h2py_image.def
+
++IsBuildJob = true
+request_cpus = 4
+request_memory = 16GB
+request_disk = 16GB
+
+queue
