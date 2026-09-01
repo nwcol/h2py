@@ -265,7 +265,7 @@ def compute_h2_stats(
                 all_pos = np.arange(interval[0], interval[1])
             if r is None:
                 all_coords = _get_map_coords(rec_map_file, all_pos,
-                                             rec_pos_col, rec_map_file)
+                                             rec_pos_col, rec_map_col)
             else:
                 all_coords = r * all_pos
         if report:
