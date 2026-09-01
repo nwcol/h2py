@@ -42,6 +42,13 @@ class GeneticMask:
         return self.mask[s]
 
     @property
+    def chrom_length(self):
+        if self.offset is not None:
+            return len(self) + self.offset
+        else:
+            return len(self)
+
+    @property
     def cumsum(self):
         """Cumulative sum."""
         if self._cumsum is None:
@@ -55,11 +62,17 @@ class GeneticMask:
             self._complement = np.logical_not(self.mask)
         return self._complement
 
-    @property
-    def complete(self):
+    def complete(self, chrom_end=None):
         """Get a version of the mask which starts at 0 (offset=0)"""
         implicit = np.zeros(self.offset, dtype=bool)
-        return np.concatenate([implicit, self.mask])
+        ret = np.concatenate([implicit, self.mask])
+        if chrom_end is not None:
+            if chrom_end > len(ret):
+                implicit = np.zeros(chrom_end - len(ret))
+                ret = np.concatenate([ret, implicit])
+            else:
+                ret = ret[:chrom_end]
+        return ret
 
     @property
     def n_accessible_sites(self):
@@ -162,9 +175,46 @@ class GeneticMask:
 
 def parse_bed_file(bed_file, chromosome=None):
     """
-    Instantiate a GeneticMask instance.
+    Instantiate a GeneticMask instance by reading a BED file.
     """
     return GeneticMask.from_bed_file(bed_file, chromosome=chromosome)
+
+
+def _get_depth(masks, signs=None):
+    """Calculate the overlap between masks in ``masks`` at each site"""
+    if signs is None:
+        signs = [1 for _ in masks]
+    chrom_length = max([m.chrom_length for m in masks])
+    mask_arrs = [s * m.complete(chrom_end=chrom_length)
+                 for s, m in zip(signs, masks)]
+    depth = np.sum(mask_arrs, axis=0)
+    return depth
+
+
+def add_masks(masks):
+    """
+    Create a new ``GeneticMask`` instance holding the union of all sites
+    labelled accessible in input masks.
+    """
+    depth = _get_depth(masks)
+    return GeneticMask(depth > 0)
+
+
+def intersect_masks(masks):
+    """
+    Create a ``GeneticMask`` instance holding the intersection of all
+    accessible sites in inputs.
+    """
+    depth = _get_depth(masks)
+    return GeneticMask(depth == len(masks))
+
+
+def subtract_masks(mask0, mask1):
+    """
+    Remove sites covered in `mask1` from the coverage of `mask0`.
+    """
+    depth = _get_depth([mask0, mask1], signs=[1, -1])
+    return GeneticMask(depth == 1)
 
 
 def _read_bed_file(bed_file, chromosome=None):
