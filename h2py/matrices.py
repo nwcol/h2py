@@ -566,7 +566,7 @@ def read_vcf_file(
 
     # Replace `GeneticMask` instance with boolean array starting at position 0
     if mask is not None:
-        mask_arr = mask.complete
+        mask_arr = mask.complete()
 
     if pop_file is not None:
         pop_spec = _read_pop_file(pop_file)
@@ -720,7 +720,7 @@ def _read_pop_file(pop_file):
 
     The specification file should have one whitespace-separated assignment on
     each line, e.g.,
-        sample pop
+        # sample pop TODO not sure about this format
         sample1 popA
         sample2 popB
         sample3 popA
@@ -728,9 +728,9 @@ def _read_pop_file(pop_file):
     samples = set()
     populations = collections.defaultdict(list)
     with open(pop_file, "r") as fin:
-        header = fin.readline().strip().split()[:2]
-        if header[0] != "sample" or header[1] != "pop":
-            raise ValueError("pop_file format is unsupported")
+        # header = fin.readline().strip().split()[:2]
+        # if header[0] != "sample" or header[1] != "pop":
+        #   raise ValueError("pop_file format is unsupported")
         for line in fin:
             sample, population = line.strip().split()[:2]
             if sample in samples:

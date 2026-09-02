@@ -16,11 +16,14 @@ class GeneticMask:
         Boolean array. True indicates accessible sites.
     offset : int, optional
         0-indexed offset from chromosome position 0.
+    chrom : str, optional
+        Chromosome number (for book-keeping).
     """
 
-    def __init__(self, mask, offset=0):
+    def __init__(self, mask, offset=0, chrom=None):
         self.mask = np.asarray(mask, dtype=bool)
         self.offset = offset
+        self.chrom = chrom
         # Latent attributes; initialized by property calls
         self._cumsum = None
         self._complement = None
@@ -84,7 +87,8 @@ class GeneticMask:
         intervals,
         offset=0,
         chrom_end=None,
-        interval=None
+        interval=None,
+        chrom=None
     ):
         """
         Initialize from an array of BED-style (0-indexed, half-open) intervals.
@@ -99,6 +103,9 @@ class GeneticMask:
         else:
             if chrom_end is None:
                 chrom_end = intervals[-1, 1]
+
+        if offset is None:
+            offset = 0
 
         length = chrom_end - offset
         if length < 1:
@@ -120,7 +127,7 @@ class GeneticMask:
                     adj_end = chrom_end
             mask[adj_start:adj_end] = True
 
-        return cls(mask, offset=offset)
+        return cls(mask, offset=offset, chrom=chrom)
 
     @classmethod
     def from_bed_file(
@@ -129,11 +136,11 @@ class GeneticMask:
         offset=0,
         chrom_end=None,
         interval=None,
-        chromosome=None,
+        chrom=None,
     ):
         """ """
-        intervals = _read_bed_file(bed_file, chromosome=chromosome)
-        return cls.from_intervals(intervals, offset=offset,
+        intervals, chrom = _read_bed_file(bed_file, chrom=chrom)
+        return cls.from_intervals(intervals, offset=offset, chrom=chrom,
                                   chrom_end=chrom_end, interval=interval)
 
     def to_positions(self, index=0):
@@ -150,14 +157,23 @@ class GeneticMask:
         intervals += self.offset
         return intervals
 
-    def to_bed_file(self, path, chromosome):
+    def to_bed_file(self, path, chrom=None):
         """Write a BED file from this mask"""
-        chromosome = str(chromosome)
+        if chrom is not None:
+            chrom = str(chrom)
+        else:
+            chrom = str(self.chrom)
         intervals = self.to_intervals()
-        with open(path, "w") as fout:
-            for (start, end) in intervals:
-                line = "\t".join([chromosome, str(start), str(end)]) + "\n"
-                fout.write(line)
+        if path.endswith(".gz"):
+            with gzip.open(path, "wb") as fout:
+                for (start, end) in intervals:
+                    line = "\t".join([chrom, str(start), str(end)]) + "\n"
+                    fout.write(line.encode())
+        else:
+            with open(path, "w") as fout:
+                for (start, end) in intervals:
+                    line = "\t".join([chrom, str(start), str(end)]) + "\n"
+                    fout.write(line)
         return
 
     def add_flank(self, flank, chrom_end=None, offset=None, interval=None):
@@ -170,14 +186,15 @@ class GeneticMask:
         intervals[:, 1] += flank
         intervals[intervals < 0] = 0
         return GeneticMask.from_intervals(intervals, chrom_end=chrom_end,
-                                          offset=offset, interval=interval)
+                                          offset=offset, interval=interval,
+                                          chrom=self.chrom)
 
 
-def parse_bed_file(bed_file, chromosome=None):
+def parse_bed_file(bed_file, chrom=None):
     """
     Instantiate a GeneticMask instance by reading a BED file.
     """
-    return GeneticMask.from_bed_file(bed_file, chromosome=chromosome)
+    return GeneticMask.from_bed_file(bed_file, chrom=chrom)
 
 
 def _get_depth(masks, signs=None):
@@ -217,7 +234,7 @@ def subtract_masks(mask0, mask1):
     return GeneticMask(depth == 1)
 
 
-def _read_bed_file(bed_file, chromosome=None):
+def _read_bed_file(bed_file, chrom=None):
     """
     Read the intervals of a BED file and return them as an array.
     """
@@ -236,13 +253,13 @@ def _read_bed_file(bed_file, chromosome=None):
             if not elems[1].isnumeric() or not elems[2].isnumeric():
                 continue
             line_chrom = elems[0]
-            if chromosome is None:
-                chromosome = line_chrom
+            if chrom is None:
+                chrom = line_chrom
             else:
-                if line_chrom != chromosome:
+                if line_chrom != chrom:
                     continue
             start, end = int(elems[1]), int(elems[2])
             intervals.append([start, end])
 
-    return np.asarray(intervals, dtype=np.int64)
+    return np.asarray(intervals, dtype=np.int64), chrom
 
