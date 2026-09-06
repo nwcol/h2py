@@ -4,3 +4,4 @@ h2py.egg-info/
 temp_examples/
 examples/data/
 tests/data/
+tests/deprecated/

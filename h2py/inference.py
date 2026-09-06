@@ -89,7 +89,7 @@ def optimize(
     max_iter : int, optional
         Maximum number of optimization iterations.
     use_log : bool, optional
-        If True, optimize over the base-10 logarithm of parameters.
+        If True, optimize over the natural logarithm of parameters.
     report : int, optional
         If > 0, print status messages every ``report`` objective function calls.
     output : str, path, optional
@@ -149,7 +149,7 @@ def optimize(
         )
 
     if use_log:
-        params_0 = np.log10(params_0) + 1
+        params_0 = np.log(params_0) + 1
 
     # Retrieve deme names and assign sample times
     deme_names = [d["name"] for d in builder["demes"]]
@@ -184,7 +184,7 @@ def optimize(
         print(timestamp(), f"Fitting to observed H2 for {pops}")
         namestr = "".join([f"{n:>10}" for n in param_names])
         if use_log:
-            _params_0 = 10 ** (params_0 - 1)
+            _params_0 = np.exp(params_0 - 1)
         else:
             _params_0 = params_0
         pstr = "".join([f"{float(p):>10.3}" for p in _params_0])
@@ -206,10 +206,11 @@ def optimize(
     elif method == "powell":
         result = scipy.optimize.fmin_powell(
             _objective_func,
-            parasms_0,
+            params_0,
             args=args,
             maxiter=max_iter,
             disp=False,
+            full_output=True,
         )
         (params_opt, f_opt), flag = result[:2], result[5]
 
@@ -220,7 +221,7 @@ def optimize(
             epsilon = 1e-3
         else:
             bounds = list(zip(lower_bounds, upper_bounds))
-            epsilon = 1e-3
+            epsilon = 1e-2
         result = scipy.optimize.fmin_l_bfgs_b(
             _objective_func,
             params_0,
@@ -228,18 +229,18 @@ def optimize(
             maxiter=max_iter,
             bounds=bounds,
             epsilon=epsilon,
+            pgtol=1e-7,
             approx_grad=True,
-            disp=False
         )
         params_opt, f_opt = result[:2]
         flag = result[2]["warnflag"]
 
     ll_opt = -f_opt
-    params_opt = 10 ** (params_opt - 1) if use_log else params_opt
+    params_opt = np.exp(params_opt - 1) if use_log else params_opt
 
     if report > 0:
         print(f"Finished with flag {flag}")
-        print(f"Log-likelihood:\t{ll_opt:.3}")
+        print(f"Log-likelihood:\t{ll_opt:.5}")
         print("Fitted parameters:")
         print("    Param\tMLE")
         for name, value in zip(param_names, params_opt):
@@ -292,7 +293,7 @@ def _objective_func(
     _counter += 1
 
     if use_log:
-        params = 10 ** (params - 1)
+        params = np.exp(params - 1)
 
     if lower_bounds is not None and np.any(params < lower_bounds):
         return OUT_OF_BOUNDS

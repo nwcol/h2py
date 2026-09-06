@@ -1,12 +1,8 @@
-"""
-Simulate 500Mb of sequence under a two-population isolation with migration
-model and fit five parameters to the resulting data.
-"""
-
 import demes
 import msprime
 import numpy as np
 import os
+import pandas
 import pickle
 
 import h2py
@@ -18,11 +14,14 @@ if not os.path.isdir("data/"):
 
 
 # Simulation parameters
-L = 5_000_000
-n_reps = 100
-u = 1.5e-8
-r = 1e-8
+L = 51229805
+ws = 5_000_000
+intervals = [[i*ws, (i+1)*ws] for i in range(int(L//ws) + 1)]
+n_reps = 10
+u = 1.3e-8
 r_bins = np.logspace(-6, -2, 17)
+bed_file = "real_data/mask_chr22.bed.gz"
+rec_map_file = "real_data/sexavg_chr22.txt.gz"
 
 
 graph_file_content = """time_units: generations
@@ -93,19 +92,14 @@ tsk_1 pop1
 pops = list(samples.keys())
 
 
-rec_map_file_content = f"""chrom\tPosition(bp)\tMap(cM)
-0\t1\t0
-0\t{L+1}\t{100*L*r}
-"""
-
-
 def run_msprime(graph, out_file):
+    rec_map = msprime.RateMap.read_hapmap(rec_map_file, sequence_length=L)
     demog = msprime.Demography.from_demes(graph)
     ts = msprime.sim_ancestry(
         samples,
         demography=demog,
         sequence_length=L,
-        recombination_rate=r,
+        recombination_rate=rec_map,
     )
     ts = msprime.sim_mutations(ts, rate=u)
     with open(out_file, "w+") as f:
@@ -114,14 +108,17 @@ def run_msprime(graph, out_file):
 
 
 def compute_stats(in_file):
-    sums = h2py.parsing.compute_h2_stats(
-        vcf_file=in_file,
-        pop_file=pop_file,
-        interval=[0, L],
-        rec_map_file=rec_map_file,
-        r_bins=r_bins,
-        report=False,
-    )
+    sums = {}
+    for i, interval in enumerate(intervals):
+        sums[i] = h2py.parsing.compute_h2_stats(
+            vcf_file=in_file,
+            pop_file=pop_file,
+            interval=interval,
+            bed_file=bed_file,
+            rec_map_file=rec_map_file,
+            r_bins=r_bins,
+            report=True,
+        )
     print(timestamp(), f"Parsed {in_file}")
     return sums
 
@@ -130,32 +127,31 @@ if __name__ == "__main__":
     prefix = "data/inference_example"
     graph_file = f"{prefix}_graph.yaml"
     options_file = f"{prefix}_params.yaml"
-    rec_map_file = f"{prefix}_map.txt"
     pop_file = f"{prefix}_pops.txt"
 
     with open(graph_file, "w") as f:
         f.write(graph_file_content)
     with open(options_file, "w") as f:
         f.write(options_file_content)
-    with open(rec_map_file, "w") as f:
-        f.write(rec_map_file_content)
     with open(pop_file, "w") as f:
         f.write(pop_file_content)
 
-    stats_file = f"{prefix}_stats.pkl"
-    # Only run simulations if the output file does not exit
-    if True: #not os.path.isfile(stats_file):
-        graph = demes.load(graph_file)
-        out_files = [f"{prefix}_{i}.vcf" for i in range(n_reps)]
-        for out_file in out_files:
-            run_msprime(graph, out_file)
-        sums = {x: compute_stats(x) for x in out_files}
-        boot_data = h2py.parsing.bootstrap_data(sums)
-        with open(stats_file, "wb") as f:
-            pickle.dump(boot_data, f)
-    else:
-        with open(stats_file, "rb") as f:
-            boot_data = pickle.load(f)
+    graph = demes.load(graph_file)
+    out_files = [f"{prefix}_{i}.vcf" for i in range(n_reps)]
+    for out_file in out_files:
+        run_msprime(graph, out_file)
+    sums = {}
+    for i, out_file in enumerate(out_files):
+        _sums = compute_stats(out_file)
+        for x in _sums:
+            sums[f"{i}_{x}"] = _sums[x]
+
+    nonzero_sums = {}
+    for label in sums:
+        if sums[label]["denoms"][-1] > 0:
+            nonzero_sums[label] = sums[label]
+    sums = nonzero_sums
+    boot_data = h2py.parsing.bootstrap_data(sums)
 
     model = h2py.H2stats.from_demes(
         graph_file,
@@ -171,63 +167,35 @@ if __name__ == "__main__":
         r_bins=boot_data["bins"]
     )
 
-    fit_graph_file = f"{prefix}_inferred_graph.yaml"
-    model_fit = h2py.inference.optimize(
-        graph_file,
-        options_file,
-        boot_data["means"],
-        boot_data["varcovs"],
-        pops=list(samples.keys()),
-        r_bins=r_bins,
-        u=u,
-        report=10,
-        max_iter=100,
-        output=fit_graph_file,
-        overwrite=True,
-        perturb=0.5,
-    )
+    #fit_graph_file = f"{prefix}_inferred_graph.yaml"
+    #model_fit = h2py.inference.optimize(
+    #    graph_file,
+    #    options_file,
+    #    boot_data["means"],
+    #    boot_data["varcovs"],
+    #    pops=list(samples.keys()),
+    #    r_bins=r_bins,
+    #    u=u,
+    #    report=10,
+    #    max_iter=100,
+    #    output=fit_graph_file,
+    #    overwrite=True,
+    #    perturb=0.5,
+    #)
 
     # Plot fitted model
-    fit_model = h2py.H2stats.from_demes(
-        fit_graph_file,
-        sampled_demes=list(samples.keys()),
-        u=u,
-        r_bins=r_bins,
-        phased=False
-    )
-    h2py.plotting.plot_h2_curves_comp(
-        fit_model,
-        boot_data["means"],
-        boot_data["varcovs"],
-        r_bins=boot_data["bins"]
-    )
-
-    boot_reps = h2py.parsing.get_bootstrap_replicates(sums)
-
-    uncertssss = h2py.uncerts.compute_uncerts(
-        fit_graph_file,
-        options_file,
-        boot_data["means"],
-        boot_data["varcovs"],
-        boot_means=boot_reps,
-        pops=pops,
-        r_bins=r_bins,
-        u=u,
-        method="FIM",
-    )
-
-    uncertssss = h2py.uncerts.compute_uncerts(
-        fit_graph_file,
-        options_file,
-        boot_data["means"],
-        boot_data["varcovs"],
-        boot_means=boot_reps,
-        pops=pops,
-        r_bins=r_bins,
-        u=u,
-        method="GIM",
-    )
-
-
+    #fit_model = h2py.H2stats.from_demes(
+    #    fit_graph_file,
+    #    sampled_demes=list(samples.keys()),
+    #    u=u,
+    #    r_bins=r_bins,
+    #    phased=False
+    #)
+    #h2py.plotting.plot_h2_curves_comp(
+    #    fit_model,
+    #    boot_data["means"],
+    #    boot_data["varcovs"],
+    #    r_bins=boot_data["bins"]
+    #)
 
 

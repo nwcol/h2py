@@ -17,7 +17,7 @@ if not os.path.isdir("data/"):
 L = 51_000_000
 ws = 5_000_000
 intervals = [[i*ws, (i+1)*ws] for i in range(int(L//ws) + 1)]
-n_reps = 1
+n_reps = 10
 u = 1.2432e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -93,9 +93,9 @@ tsk_1 pop1
 pops = list(samples.keys())
 
 
-rec_map_file_content = f"""chrom\tPosition(bp)\tMap(cM)
-0\t1\t0
-0\t{L+1}\t{100*L*r}
+rec_map_file_content = f"""chrom\tPosition(bp)\trate\tMap(cM)
+0\t1\t0\t0
+0\t{L+1}\t0\t{100*L*r}
 """
 
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     print(u, n_sites)
     for label in sums:
         for i in range(len(sums[label]["sums"]) - 1):
-            sums[label]["sums"][i] *= 1 / u**2
+            sums[label]["sums"][i] *= u**2
     boot_data = h2py.parsing.bootstrap_data(sums)
 
     model = h2py.H2stats.from_demes(

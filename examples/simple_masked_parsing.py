@@ -19,7 +19,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 5_000_000
-n_reps = 100
+n_reps = 50
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -93,10 +93,16 @@ tsk_1 pop1
 pops = list(samples.keys())
 
 
-rec_map_file_content = f"""chrom\tPosition(bp)\tMap(cM)
-0\t1\t0
-0\t{L+1}\t{100*L*r}
+rec_map_file_content = f"""chrom\tPosition(bp)\trate\tMap(cM)
+0\t1\t0\t0
+0\t{L+1}\t0\t{100*L*r}
 """
+
+bed_file_content = """chrom\tstart\tend
+0\t10\t2050000
+0\t2305000\t45000000
+"""
+bed_file = "data/bed_file.bed"
 
 
 def run_msprime(graph, out_file):
@@ -120,7 +126,8 @@ def compute_stats(in_file):
         interval=[0, L],
         rec_map_file=rec_map_file,
         r_bins=r_bins,
-        report=False,
+        report=True,
+        bed_file=bed_file,
     )
     print(timestamp(), f"Parsed {in_file}")
     return sums
@@ -141,6 +148,8 @@ if __name__ == "__main__":
         f.write(rec_map_file_content)
     with open(pop_file, "w") as f:
         f.write(pop_file_content)
+    with open(bed_file, "w") as f:
+        f.write(bed_file_content)
 
     stats_file = f"{prefix}_stats.pkl"
     # Only run simulations if the output file does not exit
