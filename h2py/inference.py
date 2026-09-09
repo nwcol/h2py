@@ -197,7 +197,7 @@ def optimize(
             _objective_func,
             params_0,
             args=args,
-            maxiter=max_iter,
+            maxfun=max_iter,
             disp=False,
             full_output=True,
         )
@@ -208,7 +208,7 @@ def optimize(
             _objective_func,
             params_0,
             args=args,
-            maxiter=max_iter,
+            maxfun=max_iter,
             disp=False,
             full_output=True,
         )
@@ -226,7 +226,7 @@ def optimize(
             _objective_func,
             params_0,
             args=args,
-            maxiter=max_iter,
+            maxfun=max_iter,
             bounds=bounds,
             epsilon=epsilon,
             pgtol=1e-7,

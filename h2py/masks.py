@@ -67,11 +67,14 @@ class GeneticMask:
 
     def complete(self, chrom_end=None):
         """Get a version of the mask which starts at 0 (offset=0)"""
-        implicit = np.zeros(self.offset, dtype=bool)
-        ret = np.concatenate([implicit, self.mask])
+        if self.offset is not None and self.offset > 0:
+            implicit = np.zeros(self.offset, dtype=bool)
+            ret = np.concatenate([implicit, self.mask])
+        else:
+            ret = self.mask
         if chrom_end is not None:
             if chrom_end > len(ret):
-                implicit = np.zeros(chrom_end - len(ret))
+                implicit = np.zeros(chrom_end - len(ret), dtype=bool)
                 ret = np.concatenate([ret, implicit])
             else:
                 ret = ret[:chrom_end]
@@ -204,7 +207,9 @@ def _get_depth(masks, signs=None):
     chrom_length = max([m.chrom_length for m in masks])
     mask_arrs = [s * m.complete(chrom_end=chrom_length)
                  for s, m in zip(signs, masks)]
-    depth = np.sum(mask_arrs, axis=0)
+    depth = np.zeros(chrom_length, dtype=np.int64)
+    for mask in mask_arrs:
+        depth += mask
     return depth
 
 
@@ -214,7 +219,7 @@ def add_masks(masks):
     labelled accessible in input masks.
     """
     depth = _get_depth(masks)
-    return GeneticMask(depth > 0)
+    return GeneticMask(depth > 0, chrom=masks[0].chrom)
 
 
 def intersect_masks(masks):
@@ -223,7 +228,7 @@ def intersect_masks(masks):
     accessible sites in inputs.
     """
     depth = _get_depth(masks)
-    return GeneticMask(depth == len(masks))
+    return GeneticMask(depth == len(masks), chrom=masks[0].chrom)
 
 
 def subtract_masks(mask0, mask1):
@@ -231,7 +236,7 @@ def subtract_masks(mask0, mask1):
     Remove sites covered in `mask1` from the coverage of `mask0`.
     """
     depth = _get_depth([mask0, mask1], signs=[1, -1])
-    return GeneticMask(depth == 1)
+    return GeneticMask(depth == 1, chrom=mask0.chrom)
 
 
 def _read_bed_file(bed_file, chrom=None):
