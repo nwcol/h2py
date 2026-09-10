@@ -533,7 +533,7 @@ def subset_data(data, to_pops=None, min_r=None, max_r=None):
         varcovs = _subset_varcovs(varcovs, data["pops"], to_pops)
         pops = to_pops
         n_pops = len(pops)
-        stats = [_h2_names(n_pops), _h_names(n_pops)]
+        stats = [utils._h2_names(n_pops), utils._h_names(n_pops)]
     else:
         pops = data["pops"]
         stats = data["stats"]
@@ -551,6 +551,10 @@ def subset_data(data, to_pops=None, min_r=None, max_r=None):
         bins.append(b)
         new_means.append(means[ii])
         new_varcovs.append(varcovs[ii])
+
+    # Append H statistics
+    new_means.append(means[-1])
+    new_varcovs.append(varcovs[-1])
 
     return {"pops": pops, "stats": stats, "bins": bins, "means": new_means,
             "varcovs": new_varcovs}
@@ -601,7 +605,7 @@ def get_bootstrap_replicates(all_data, n_reps=None, n_samples=None):
 
 def _subset_means(means, pops, to_pops):
     """Extract the subset of means that pertain to populations in `to_pops`"""
-    stats = _h2_names(len(pops))
+    stats = utils._h2_names(len(pops))
     to_indices = [pops.index(p) for p in to_pops]
     to_stats = []
     for ii, idx1 in enumerate(to_indices):
@@ -615,7 +619,7 @@ def _subset_means(means, pops, to_pops):
 
 def _subset_varcovs(varcovs, pops, to_pops):
     """Extract a subsets of covariance matrices that correspond to `to_pops`"""
-    stats = _h2_names(len(pops))
+    stats = utils._h2_names(len(pops))
     to_indices = [pops.index(p) for p in to_pops]
     to_stats = []
     for ii, idx1 in enumerate(to_indices):

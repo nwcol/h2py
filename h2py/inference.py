@@ -349,8 +349,8 @@ def _perturb_params(
                     if n_redraws > max_tries:
                         raise ValueError(
                             "failed to perturb parameters within bounds")
-                    draw[ii] = np.random.unform(params[ii] * (1 - fold),
-                                                params[ii] * (1 + fold))
+                    draw[ii] = np.random.uniform(params[ii] * (1 - fold),
+                                                 params[ii] * (1 + fold))
                     n_redraws += 1
         if constraints is not None:
             if np.all(constraints(draw) > 0):

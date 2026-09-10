@@ -145,7 +145,8 @@ def plot_h2_curves(
     elif cols is None:
         cols = int(np.ceil(n_panels / rows))
 
-    xs = (r_bins[1:] + r_bins[:-1]) / 2
+    xs = np.mean(r_bins, axis=1)
+    #xs = (r_bins[1:] + r_bins[:-1]) / 2
 
     fig, axs = plt.subplots(rows, cols, figsize=fig_size, layout="constrained")
 
