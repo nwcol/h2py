@@ -205,3 +205,88 @@ def plot_h2_curves(
         plt.show()
     return fig
 
+
+
+
+
+def plot_param_distributions(
+    data,
+    groups,
+    x_labels=None,
+    data_labels=None,
+    param_labels=None,
+    figsize=(6, 6),
+    grid_alpha=0.4,
+    spread=0.3,
+    capsize=0,
+):
+    """
+    Plot parameter MLE and CI from one or more datasets.
+
+    Parameters
+    ----------
+    data : list of pandas.DataFrame
+        Each dataframe should have columns 'name', 'MLE', 'CI_lower', 'CI_upper'
+    groups : list of dict
+        Assign parameters to figure panels; parameters left out are not plotted.
+        Should have keys 'params' and 'log', with the latter a boolean
+        specifying whether to use a log scale for the panel.
+    x_labels : list
+        Optional labels for panel x-axes
+    data_labels : list
+        Optional labels for datasets
+    param_labels : dict
+        Optional mapping of parameter names to labels. Not all parameters need
+        to be included.
+    figsize : tuple
+    grid_alpha : float
+    spread : float
+        Spread of datasets on the y-axis. If 0, error bars overlap on the
+        y-axis entirely.
+    capsize : float
+        Cap size for error bars. Useful when ``spread`` is 0.
+    """
+    n_datasets = len(data)
+    n_groups = len(groups)
+    group_lens = [len(x["params"]) for x in groups]
+
+    fig, axs = plt.subplots(
+        n_groups, 1, figsize=figsize, layout="tight", height_ratios=group_lens)
+
+    for i, (group, ax) in enumerate(zip(groups, axs)):
+        params = group["params"]
+        for j, param in enumerate(params):
+            ax.set_prop_cycle(None)
+            for k, df in enumerate(data):
+                row = df[df["name"] == param]
+                mle = next(iter(row["MLE"]))
+                lower = mle - next(iter(row["CI_lower"]))
+                upper = next(iter(row["CI_upper"])) - mle
+                offset = spread * ((n_datasets - 1) / 2 - k) / ((n_datasets - 1) / 2)
+                ax.errorbar([mle], [-j + offset], xerr=[[lower], [upper]],
+                            fmt="o", mfc="none", capsize=capsize)
+
+        # Label parameter values on the y axis
+        group_param_labels = []
+        for param in params:
+            if param in param_labels:
+                label = param_labels[param]
+            else:
+                label = param
+            group_param_labels.append(label)
+        ax.set_yticks(range(0, -len(params), -1), group_param_labels)
+
+        if group["log"]:
+            ax.set_xscale("log")
+
+        if x_labels is not None:
+            ax.set_xlabel(x_labels[i])
+
+        ax.set_ylim(-len(params), 1)
+
+        if grid_alpha > 0:
+            ax.grid(alpha=grid_alpha)
+    return
+
+
+
