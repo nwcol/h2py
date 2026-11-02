@@ -40,8 +40,9 @@ def plot_h2_curves_comp(
         labels = stats_to_plot
 
     if rows is None and cols is None:
-        rows = 1
-        cols = len(stats_to_plot)
+        n_panels = len(stats)
+        cols = int(np.ceil(np.sqrt(n_panels)))
+        rows = int(np.ceil(n_panels / cols))
     elif rows is None:
         rows = int(np.ceil(len(stats_to_plot) / cols))
     elif cols is None:
@@ -104,6 +105,8 @@ def plot_h2_curves(
     stat_labels=None,
     model_labels=None,
     data_labels=None,
+    colors=None,
+    alpha=0.3,
     plot_errs=True,
     # rs=None, TODO
     r_bins=None,
@@ -138,12 +141,15 @@ def plot_h2_curves(
 
     n_panels = len(stats_to_plot)
     if rows is None and cols is None:
-        rows = 1
-        cols = n_panels
+        cols = int(np.ceil(np.sqrt(n_panels)))
+        rows = int(np.ceil(n_panels / cols))
     elif rows is None:
         rows = int(np.ceil(n_panels / cols))
     elif cols is None:
         cols = int(np.ceil(n_panels / rows))
+
+    if colors is None:
+        colors = mpl.colors.TABLEAU_COLORS
 
     xs = np.mean(r_bins, axis=1)
     #xs = (r_bins[1:] + r_bins[:-1]) / 2
@@ -166,31 +172,50 @@ def plot_h2_curves(
 
         # Loop over datasets
         if plot_errs:
-            for ms, vc in zip(means, varcovs):
+            for jj, (ms, vc) in enumerate(zip(means, varcovs)):
                 data = np.array([m[idx] for m in ms[:-1]])
                 data_err = 1.96 * np.array([v[idx, idx] for v in vc[:-1]]) ** 0.5
-                ax.fill_between(xs, data - data_err, data + data_err, alpha=0.3)
-            ax.set_prop_cycle(None)
+                ax.fill_between(xs, data - data_err, data + data_err, alpha=alpha,
+                                color=colors[jj], edgecolor="none")
+            #ax.set_prop_cycle(None)
 
         for jj, ms in enumerate(means):
-            label = data_labels[jj]
             data = [m[idx] for m in ms[:-1]]
-            ax.plot(xs, data, "--", label=label)
+            ax.plot(xs, data, "--", color=colors[jj])
 
         for jj, model in enumerate(h2_stats):
-            label = model_labels[jj]
             data = [x[idx] for x in model.h2()]
-            ax.plot(xs, data, label=label)
+            ax.plot(xs, data, color=colors[jj + len(means)])
 
         # Format the panel
         ax_label = stat_labels[ii]
-        ax.set_title(ax_label)
+        ax.set_title(ax_label, fontsize="x-small", y=0.8)
         ax.set_xscale("log")
-        ax.legend(frameon=False, fontsize=7)
-        if ii >= rows * (cols - 1) - 1:
-            ax.set_xlabel("$r$")
+        #if ii >= cols * (rows - 1) - 1:
+        #    ax.set_xlabel("$r$")
         if ii % cols == 0:
             ax.set_ylabel("$H_2$")
+
+    if len(data_labels) > 0 or len(model_labels) > 0:
+        _colors = []
+        for c in colors:
+            if c not in _colors:
+                _colors.append(c)
+        colors = _colors
+        handles0 = [mpl.lines.Line2D([], [], color=c, label=l, linestyle="--")
+                    for l, c in zip(data_labels, colors)]
+        handles1 = [mpl.lines.Line2D([], [], color=c, label=l)
+                    for l, c in zip(model_labels, colors[len(handles0):])]
+        fig.legend(
+            handles=handles0 + handles1,
+            framealpha=0,
+            loc="lower center",
+            ncols=4,
+            bbox_to_anchor=(0.5, -0.05 if rows >= 4 else -0.07)
+        )
+
+    for ax in axs[-1]:
+        ax.set_xlabel("$r$")
 
     # Clean up extra axes
     for ax in f_axs[len(stats_to_plot):]:
@@ -200,13 +225,10 @@ def plot_h2_curves(
         fig.suptitle(title)
 
     if out_file is not None:
-        plt.savefig(out_file, dpi=dpi)
+        plt.savefig(out_file, dpi=dpi, bbox_inches='tight')
     if show:
         plt.show()
-    return fig
-
-
-
+    return
 
 
 def plot_param_distributions(
@@ -219,6 +241,7 @@ def plot_param_distributions(
     grid_alpha=0.4,
     spread=0.3,
     capsize=0,
+    out=None,
 ):
     """
     Plot parameter MLE and CI from one or more datasets.
@@ -258,13 +281,30 @@ def plot_param_distributions(
         for j, param in enumerate(params):
             ax.set_prop_cycle(None)
             for k, df in enumerate(data):
-                row = df[df["name"] == param]
-                mle = next(iter(row["MLE"]))
-                lower = mle - next(iter(row["CI_lower"]))
-                upper = next(iter(row["CI_upper"])) - mle
-                offset = spread * ((n_datasets - 1) / 2 - k) / ((n_datasets - 1) / 2)
+                if param in list(df["name"]):
+                    row = df[df["name"] == param]
+                    mle = next(iter(row["MLE"]))
+                    lower = mle - next(iter(row["CI_lower"]))
+                    upper = next(iter(row["CI_upper"])) - mle
+                    if lower < 0:
+                        lower = 0
+                    if upper < 0:
+                        upper = 0
+                else:
+                    mle = lower = upper = np.nan
+
+                if n_datasets > 1:
+                    offset = spread * ((n_datasets - 1) / 2 - k) / ((n_datasets - 1) / 2)
+                else:
+                    offset = 0
+                label = None
+                if data_labels is not None:
+                    if i == 0 and j == 0:
+                        label = data_labels[k]
                 ax.errorbar([mle], [-j + offset], xerr=[[lower], [upper]],
-                            fmt="o", mfc="none", capsize=capsize)
+                            fmt="o", markersize=3, capsize=capsize, label=label)
+
+        axs[0].legend(framealpha=0)
 
         # Label parameter values on the y axis
         group_param_labels = []
@@ -286,6 +326,18 @@ def plot_param_distributions(
 
         if grid_alpha > 0:
             ax.grid(alpha=grid_alpha)
+
+    #if data_labels is not None:
+    #    colors = mpl.colors.TABLEAU_COLORS
+    #    labels = [mpl.lines.Line2D([], [], color=c, label=l)
+    #              for c, l in zip(colors, data_labels)]
+    #    axs[0].legend(handles=labels, framealpha=0)
+    #    fig.legend(handles=labels, framealpha=0, loc="lower center", ncols=4,
+    #        bbox_to_anchor=(0.5, 0.05))
+
+    if out is not None:
+        plt.savefig(out)
+
     return
 
 

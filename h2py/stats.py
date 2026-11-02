@@ -95,11 +95,24 @@ class H2stats:
         else:
             return self.data[:-1]
 
-    def pi_matrix(self):
-        return
+    def h_matrix(self):
+        """
+        Get a matrix of expected heterozygosities.
+        """
+        n_pops = len(self.pops)
+        mat = np.zeros((n_pops, n_pops), dtype=np.float64)
+        for ii in range(n_pops):
+            for jj in range(ii, n_pops):
+                idx = self.h_names.index(f"H_{ii}_{jj}")
+                mat[ii, jj] = mat[jj, ii] = self.h()[idx]
+        return mat
 
     def f2(self, ii, jj):
-        return
+        idx_ij = self.h_names.index(_sort_name(f"H_{ii}_{jj}"))
+        h_ij = self.h()[idx_ij]
+        h_i = self.h()[self.h_names.index(f"H_{ii}_{ii}")]
+        h_j = self.h()[self.h_names.index(f"H_{jj}_{jj}")]
+        return h_ij - (h_i + h_j) / 2
 
     def f2_matrix(self):
         return

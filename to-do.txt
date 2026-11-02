@@ -1,3 +1,10 @@
+New
+- u-scaling also scales H! probably not desirable.
+
+
+
+
+
 General
 - make bin conventions uniform! arrays or 2-tuples?
 - make sure bootstrapping works: CIs look big?

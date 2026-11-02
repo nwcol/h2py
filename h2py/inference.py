@@ -405,3 +405,16 @@ def _compute_exact_bin_ll(xs, mus, varcovs):
     return np.array([scipy.stats.multivariate_normal(mean=m, cov=c).logpdf(x)
                      for x, m, c in zip(xs, mus, varcovs)])
 
+
+# -----------------------------------------------------------------------------
+# Misc
+# -----------------------------------------------------------------------------
+
+
+def load_params(graph, options):
+    """Load parameter names and values from a graph"""
+    builder = _get_demes_dict(graph)
+    options = _get_params_dict(options)
+    pnames, params = _set_up_params_and_bounds(options, builder)[:2]
+    return params, pnames
+
