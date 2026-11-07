@@ -1,0 +1,7 @@
+h2py
+====
+
+.. toctree::
+   :maxdepth: 4
+
+   h2py

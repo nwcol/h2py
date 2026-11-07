@@ -1,0 +1,5 @@
+============
+Introduction
+============
+
+``h2py`` is a Python package for learning population history from sparsely sampled sequence data.

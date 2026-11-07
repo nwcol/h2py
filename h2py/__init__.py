@@ -11,5 +11,5 @@ from . import utils
 
 from .masks import GeneticMask
 from .matrices import HaplotypeMatrix, GenotypeMatrix, GenotypeProbMatrix
-from .stats import H2stats, _LDstats
+from .stats import H2stats, LDstats
 

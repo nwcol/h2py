@@ -1,0 +1,1177 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>h2py package &mdash; h2py 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            h2py
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pages/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/estimating.html">Estimating H2 from sequence data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/bootstrap.html">Bootstrapping statistics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/specification.html">Specifying demographic models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/inference.html">Inferring population history with H2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/uncertainty.html">Estimating parameter uncertainty</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/api.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">h2py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">h2py package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/h2py.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="h2py-package">
+<h1>h2py package<a class="headerlink" href="#h2py-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-h2py.inference">
+<span id="h2py-inference-module"></span><h2>h2py.inference module<a class="headerlink" href="#module-h2py.inference" title="Link to this heading"></a></h2>
+<p>Infer the parameters of demographic models using maximum likelihood.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference.load_params">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">load_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference.load_params" title="Link to this definition"></a></dt>
+<dd><p>Load parameter names and values from a graph</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference.optimize">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fmin'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference.optimize" title="Link to this definition"></a></dt>
+<dd><p>Fit the parameters of a demographic model to observed H2 using ML.</p>
+<p>Mostly mimics the functionality of <code class="docutils literal notranslate"><span class="pre">moments.Demes.Inference.optimize_LD</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Demes YAML file.</p></li>
+<li><p><strong>options_file</strong> (<em>str</em><em>, </em><em>path</em>) – Moments.Demes-style parameter options file. TODO link to docs</p></li>
+<li><p><strong>means</strong> (<em>list</em>) – Arrays with mean observed statistics.</p></li>
+<li><p><strong>varcovs</strong> (<em>list</em>) – Covariance matrices generated with the bootstrap.</p></li>
+<li><p><strong>pops</strong> (<em>list</em>) – List of population labels corresponding to data. Each element should
+match the name of a deme in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>r_bins</strong> (<em>np.ndarray</em>) – Array of recombination bin edges corresponding to data.</p></li>
+<li><p><strong>u</strong> (<em>float</em>) – Mutation rate parameter.</p></li>
+<li><p><strong>fit_u</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, fit the mutation rate as a free parameter.</p></li>
+<li><p><strong>phased</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, compute phased expected H2. Should be used only when observed
+H2 was computed from phased data with the haplotype setting.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – SciPy optimization function to use. Must be “fmin”, “powell”, or
+“lbfgsb”.</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of optimization iterations.</p></li>
+<li><p><strong>use_log</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, optimize over the natural logarithm of parameters.</p></li>
+<li><p><strong>report</strong> (<em>int</em><em>, </em><em>optional</em>) – If &gt; 0, print status messages every <code class="docutils literal notranslate"><span class="pre">report</span></code> objective function calls.</p></li>
+<li><p><strong>output</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Save a graph with optimized parameters to this path.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, overwrite any existing file at <code class="docutils literal notranslate"><span class="pre">output</span></code>.</p></li>
+<li><p><strong>perturb</strong> (<em>float</em><em>, </em><em>optional</em>) – If a positive float, perturb parameters by as much as <code class="docutils literal notranslate"><span class="pre">|p</span> <span class="pre">*</span> <span class="pre">perturb|</span></code>
+from the initial guess given in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>param_names</strong> (<em>list</em>)</p></li>
+<li><p><strong>params_opt</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>ll_opt</strong> (<em>float</em>) – Log-likelihood achieved in optimization.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-h2py.masks">
+<span id="h2py-masks-module"></span><h2>h2py.masks module<a class="headerlink" href="#module-h2py.masks" title="Link to this heading"></a></h2>
+<p>Genetic mask class for tracking site accessibility.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.masks.</span></span><span class="sig-name descname"><span class="pre">GeneticMask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wrapper for a numpy boolean array representing site accessibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>np.ndarray</em>) – Boolean array. True indicates accessible sites.</p></li>
+<li><p><strong>offset</strong> (<em>int</em><em>, </em><em>optional</em>) – 0-indexed offset from chromosome position 0.</p></li>
+<li><p><strong>chrom</strong> (<em>str</em><em>, </em><em>optional</em>) – Chromosome number (for book-keeping).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.add_flank">
+<span class="sig-name descname"><span class="pre">add_flank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flank</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.add_flank" title="Link to this definition"></a></dt>
+<dd><p>Return a new instance where accessible windows are extended by
+<code class="docutils literal notranslate"><span class="pre">flank</span></code> bp.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.chrom_length">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">chrom_length</span></span><a class="headerlink" href="#h2py.masks.GeneticMask.chrom_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.complement">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complement</span></span><a class="headerlink" href="#h2py.masks.GeneticMask.complement" title="Link to this definition"></a></dt>
+<dd><p>Get a boolean array with <cite>False</cite> at accessible positions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.complete">
+<span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chrom_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.complete" title="Link to this definition"></a></dt>
+<dd><p>Get a version of the mask which starts at 0 (offset=0)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.cumsum">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">cumsum</span></span><a class="headerlink" href="#h2py.masks.GeneticMask.cumsum" title="Link to this definition"></a></dt>
+<dd><p>Cumulative sum.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.from_bed_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_bed_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bed_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.from_bed_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.from_intervals">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intervals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.from_intervals" title="Link to this definition"></a></dt>
+<dd><p>Initialize from an array of BED-style (0-indexed, half-open) intervals.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.n_accessible_sites">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_accessible_sites</span></span><a class="headerlink" href="#h2py.masks.GeneticMask.n_accessible_sites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.to_bed_file">
+<span class="sig-name descname"><span class="pre">to_bed_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.to_bed_file" title="Link to this definition"></a></dt>
+<dd><p>Write a BED file from this mask</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.to_intervals">
+<span class="sig-name descname"><span class="pre">to_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.to_intervals" title="Link to this definition"></a></dt>
+<dd><p>Get BED-style intervals</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.masks.GeneticMask.to_positions">
+<span class="sig-name descname"><span class="pre">to_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.GeneticMask.to_positions" title="Link to this definition"></a></dt>
+<dd><p>Get <code class="docutils literal notranslate"><span class="pre">index</span></code>-indexed positions of accessible sites.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.masks.add_masks">
+<span class="sig-prename descclassname"><span class="pre">h2py.masks.</span></span><span class="sig-name descname"><span class="pre">add_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.add_masks" title="Link to this definition"></a></dt>
+<dd><p>Create a new <code class="docutils literal notranslate"><span class="pre">GeneticMask</span></code> instance holding the union of all sites
+labelled accessible in input masks.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.masks.intersect_masks">
+<span class="sig-prename descclassname"><span class="pre">h2py.masks.</span></span><span class="sig-name descname"><span class="pre">intersect_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.intersect_masks" title="Link to this definition"></a></dt>
+<dd><p>Create a <code class="docutils literal notranslate"><span class="pre">GeneticMask</span></code> instance holding the intersection of all
+accessible sites in inputs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.masks.parse_bed_file">
+<span class="sig-prename descclassname"><span class="pre">h2py.masks.</span></span><span class="sig-name descname"><span class="pre">parse_bed_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bed_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.parse_bed_file" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a GeneticMask instance by reading a BED file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.masks.subtract_masks">
+<span class="sig-prename descclassname"><span class="pre">h2py.masks.</span></span><span class="sig-name descname"><span class="pre">subtract_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.masks.subtract_masks" title="Link to this definition"></a></dt>
+<dd><p>Remove sites covered in <cite>mask1</cite> from the coverage of <cite>mask0</cite>.</p>
+</dd></dl>
+
+</section>
+<section id="module-h2py.matrices">
+<span id="h2py-matrices-module"></span><h2>h2py.matrices module<a class="headerlink" href="#module-h2py.matrices" title="Link to this heading"></a></h2>
+<p>Matrix classes for representing different types of sequence data.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.matrices.</span></span><span class="sig-name descname"><span class="pre">GenotypeMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">genotypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Matrix of biallelic genotypes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>genotypes</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.n_sites" title="h2py.matrices.GenotypeMatrix.n_sites"><em>n_sites</em></a><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.n_samples" title="h2py.matrices.GenotypeMatrix.n_samples"><em>n_samples</em></a><em>)</em>) – Array of biallelic genotypes. Entries 0, 1, 2 denote genotypes 0/0,
+0/1, 1/1 respectively.</p></li>
+<li><p><strong>positions</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.n_sites" title="h2py.matrices.GenotypeMatrix.n_sites"><em>n_sites</em></a><em>,</em><em>)</em>) – Array of 0-indexed site positions.</p></li>
+<li><p><strong>pop_map</strong> (<em>dict</em>) – Mapping between population labels and lists of constituent sample
+indices.</p></li>
+<li><p><strong>mask</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.n_sites" title="h2py.matrices.GenotypeMatrix.n_sites"><em>n_sites</em></a><em>,</em><em>)</em><em>, </em><em>optional</em>) – Boolean array</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.apply_mask">
+<span class="sig-name descname"><span class="pre">apply_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.apply_mask" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.from_haplotype_matrix">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_haplotype_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">haplotype_matrix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.from_haplotype_matrix" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a genotype matrix by simplifying a haplotype matrix.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.from_vcf">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_vcf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.from_vcf" title="Link to this definition"></a></dt>
+<dd><p>Load a genotype matrix from a VCF file.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.genotypes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">genotypes</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.genotypes" title="Link to this definition"></a></dt>
+<dd><p>Access masked genotype matrix.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.n_pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_pops</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.n_pops" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.n_samples">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_samples</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.n_samples" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.n_sites">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_sites</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.n_sites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pops</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.pops" title="Link to this definition"></a></dt>
+<dd><p>Access population names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.positions">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">positions</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.positions" title="Link to this definition"></a></dt>
+<dd><p>Access masked positions array.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.shape">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.shape" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.slice_pop">
+<span class="sig-name descname"><span class="pre">slice_pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.slice_pop" title="Link to this definition"></a></dt>
+<dd><p>Get the bare genotype array for a given population label.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeMatrix.slice_sample">
+<span class="sig-name descname"><span class="pre">slice_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeMatrix.slice_sample" title="Link to this definition"></a></dt>
+<dd><p>Access the bare genotype array for a given sample index.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.matrices.</span></span><span class="sig-name descname"><span class="pre">GenotypeProbMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">genotype_probs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Matrix of biallelic genotype probabilities (VCF field <code class="docutils literal notranslate"><span class="pre">GP</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>genotype_probs</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.shape" title="h2py.matrices.GenotypeProbMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.n_sites" title="h2py.matrices.GenotypeProbMatrix.n_sites"><em>n_sites</em></a><em>, </em><em>3 * n_samples</em><em>)</em>) – Array of genotype probabilities. Probabilities p(0/0), p(0/1), p(1/1)
+for sample <code class="docutils literal notranslate"><span class="pre">i</span></code> are housed in columns <code class="docutils literal notranslate"><span class="pre">3*i,</span> <span class="pre">3*i+1,</span> <span class="pre">3*i+2</span></code>.</p></li>
+<li><p><strong>positions</strong> (<em>np.ndarray</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.shape" title="h2py.matrices.GenotypeProbMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.n_sites" title="h2py.matrices.GenotypeProbMatrix.n_sites"><em>n_sites</em></a><em>)</em>) – 0-indexed positions of sites in <code class="docutils literal notranslate"><span class="pre">genotype_probs</span></code>.</p></li>
+<li><p><strong>pop_map</strong> (<em>dict</em>) – Mapping from population labels to lists of sample indices.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.apply_mask">
+<span class="sig-name descname"><span class="pre">apply_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accessible_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.apply_mask" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.find_non_missing_data">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">find_non_missing_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.find_non_missing_data" title="Link to this definition"></a></dt>
+<dd><p>Get an array of sample-specific masks to exclude missing data.</p>
+<p>Missing genotype probability data is represented as <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">-1,</span> <span class="pre">-1]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.shape" title="h2py.matrices.GenotypeProbMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.n_sites" title="h2py.matrices.GenotypeProbMatrix.n_sites"><em>n_sites</em></a><em>, </em><em>3 * n_samples</em><em>)</em>) – Genotype probability array.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>np.ndarray</strong> – Boolean array, with True where data is non-missing and False
+elsewhere.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.shape" title="h2py.matrices.GenotypeProbMatrix.shape">shape</a> (<a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.n_sites" title="h2py.matrices.GenotypeProbMatrix.n_sites">n_sites</a>, <a class="reference internal" href="#h2py.matrices.GenotypeProbMatrix.n_samples" title="h2py.matrices.GenotypeProbMatrix.n_samples">n_samples</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.from_genotype_matrix">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_genotype_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.from_genotype_matrix" title="Link to this definition"></a></dt>
+<dd><p>Instantiate from a genotype matrix: place 1.0 mass on true genotypes</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.from_haplotype_matrix">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_haplotype_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.from_haplotype_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.from_tree_sequence">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_tree_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.from_tree_sequence" title="Link to this definition"></a></dt>
+<dd><p>Use a simple simulation to generate a genotype probability matrix from
+a simulated tree sequence.</p>
+<p>Importantly: the “binary” mutation model must be used to simulate
+mutation with <code class="docutils literal notranslate"><span class="pre">msprime.sim_mutations</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>write</strong> (<em># TODO</em>)</p></li>
+<li><p><strong>samples</strong> (<em>dict</em>) – Sample argument passed to <code class="docutils literal notranslate"><span class="pre">msprime.sim_ancestry</span></code>, with form
+<code class="docutils literal notranslate"><span class="pre">{&quot;pop&quot;:</span> <span class="pre">sample_size,}</span></code>. Used to set up population map.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.from_vcf">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_vcf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.from_vcf" title="Link to this definition"></a></dt>
+<dd><p>Load genotype probabilities from a VCF file.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.genotype_probs">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">genotype_probs</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.genotype_probs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.get_genotype_prob_idx">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_genotype_prob_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.get_genotype_prob_idx" title="Link to this definition"></a></dt>
+<dd><p>Return the indices to genotype probabilities for a sample.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.get_non_missing_mask">
+<span class="sig-name descname"><span class="pre">get_non_missing_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.get_non_missing_mask" title="Link to this definition"></a></dt>
+<dd><p>Get boolean array with False where any indexed sample has missing data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.get_sample_positions">
+<span class="sig-name descname"><span class="pre">get_sample_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.get_sample_positions" title="Link to this definition"></a></dt>
+<dd><p>Get 0-indexed positions where one or more samples have non-missing GPs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sample_idx</strong> (<em>int</em><em> or </em><em>list</em><em> of </em><em>int</em>) – If more than one sample is given, return the intersection of sites
+with non-missing data across samples.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.n_pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_pops</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.n_pops" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.n_samples">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_samples</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.n_samples" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.n_sites">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_sites</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.n_sites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pops</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.pops" title="Link to this definition"></a></dt>
+<dd><p>Access population names from <code class="docutils literal notranslate"><span class="pre">self.pop_map</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.positions">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">positions</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.positions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.shape">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.shape" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.slice_pop">
+<span class="sig-name descname"><span class="pre">slice_pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_missing_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.slice_pop" title="Link to this definition"></a></dt>
+<dd><p>Access the bare genotype probability array for a population.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.slice_sample">
+<span class="sig-name descname"><span class="pre">slice_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_missing_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.slice_sample" title="Link to this definition"></a></dt>
+<dd><p>Access the bare genotype probability array for a single sample.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.GenotypeProbMatrix.slice_samples">
+<span class="sig-name descname"><span class="pre">slice_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_missing_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.GenotypeProbMatrix.slice_samples" title="Link to this definition"></a></dt>
+<dd><p>Access bare genotype probability arrays for several samples.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.matrices.</span></span><span class="sig-name descname"><span class="pre">HaplotypeMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">haplotypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Matrix of haplotypes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>haplotypes</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.HaplotypeMatrix.shape" title="h2py.matrices.HaplotypeMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.HaplotypeMatrix.n_sites" title="h2py.matrices.HaplotypeMatrix.n_sites"><em>n_sites</em></a><em>, </em><em>2*n_samples</em><em>)</em>) – Array of haplotypes. These may be biallelic or multiallelic, with 0
+representing the reference allele and 1, 2, 4 representing alternate
+alleles.</p></li>
+<li><p><strong>positions</strong> (<em>array-like</em><em>, </em><a class="reference internal" href="#h2py.matrices.HaplotypeMatrix.shape" title="h2py.matrices.HaplotypeMatrix.shape"><em>shape</em></a><em> (</em><a class="reference internal" href="#h2py.matrices.HaplotypeMatrix.n_sites" title="h2py.matrices.HaplotypeMatrix.n_sites"><em>n_sites</em></a><em>,</em><em>)</em>) – Array of 0-indexed haplotype site positions.</p></li>
+<li><p><strong>pop_map</strong> (<em>dict</em>) – Mapping between population labels and indices of diploid samples.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.from_vcf">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_vcf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ac_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.from_vcf" title="Link to this definition"></a></dt>
+<dd><p>Load a haplotype matrix from a VCF file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.get_haplotype_idx">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_haplotype_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.get_haplotype_idx" title="Link to this definition"></a></dt>
+<dd><p>Get a list of indices to access the haplotypes of a sample.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.n_haplotypes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_haplotypes</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.n_haplotypes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.n_pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_pops</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.n_pops" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.n_samples">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_samples</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.n_samples" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.n_sites">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_sites</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.n_sites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pops</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.pops" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.shape">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.shape" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.slice_haplotype">
+<span class="sig-name descname"><span class="pre">slice_haplotype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.slice_haplotype" title="Link to this definition"></a></dt>
+<dd><p>Access a single haplotype as a 1d array.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.slice_pop">
+<span class="sig-name descname"><span class="pre">slice_pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.slice_pop" title="Link to this definition"></a></dt>
+<dd><p>Access the bare haplotype array for a specific population.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.matrices.HaplotypeMatrix.slice_sample">
+<span class="sig-name descname"><span class="pre">slice_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.HaplotypeMatrix.slice_sample" title="Link to this definition"></a></dt>
+<dd><p>Access the bare haplotype array for a specific sample.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.matrices.read_vcf_file">
+<span class="sig-prename descclassname"><span class="pre">h2py.matrices.</span></span><span class="sig-name descname"><span class="pre">read_vcf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_genotype_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ac_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.matrices.read_vcf_file" title="Link to this definition"></a></dt>
+<dd><p>Read sequence data from a VCF file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vcf_file</strong> (<em>str</em><em>, </em><em>path</em>) – Path to VCF file.</p></li>
+<li><p><strong>bed_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to BED file that specifies accessible intervals.</p></li>
+<li><p><strong>interval</strong> (<em>tuple</em><em>, </em><em>length 2</em><em>, </em><em>optional</em>) – BED-style (0-indexed, half open) interval to read.</p></li>
+<li><p><strong>mask</strong> (<a class="reference internal" href="#h2py.masks.GeneticMask" title="h2py.masks.GeneticMask"><em>GeneticMask</em></a><em>, </em><em>optional</em>) – Genetic mask.</p></li>
+<li><p><strong>chromosome</strong> (<em>str</em><em>, </em><em>optional</em>) – If given, ignore all sites with other <code class="docutils literal notranslate"><span class="pre">CHROM</span></code>.</p></li>
+<li><p><strong>pop_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to whitespace-separated population specification file. Following
+moments, this should have columns headered ‘sample’, ‘population’.
+If not given, load every sample and assign each to a unique population.</p></li>
+<li><p><strong>phased</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), load haplotypes.</p></li>
+<li><p><strong>read_genotype_probs</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), load sample genotype probabilities <code class="docutils literal notranslate"><span class="pre">GP</span></code> and
+transform them from Phred scores to probabilities.</p></li>
+<li><p><strong>ac_filter</strong> (<em>bool</em><em>, </em><em>optional</em>) – Allele count filter. If True (default), skip multiallelic sites.</p></li>
+<li><p><strong>filtered</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), skip lines where <code class="docutils literal notranslate"><span class="pre">FILTER</span></code> is not <code class="docutils literal notranslate"><span class="pre">PASS</span></code>.</p></li>
+<li><p><strong>return_raw</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the matrix as a list of lists.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>matrix</strong> (<em>np.ndarray, shape (n_sites, n_entries)</em>) – Array of sequence data. For genotype data, <code class="docutils literal notranslate"><span class="pre">n_entries</span></code> is the number
+of samples, while for haplotypes and genotype probabilities it is twice
+or three times that number, respectively.</p></li>
+<li><p><strong>positions</strong> (<em>np.ndarray, shape (n_sites,)</em>) – Array of 0-indexed site positions.</p></li>
+<li><p><strong>pop_map</strong> (<em>dict</em>) – Maps population names to indices of samples in <code class="docutils literal notranslate"><span class="pre">matrix</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-h2py.parsing">
+<span id="h2py-parsing-module"></span><h2>h2py.parsing module<a class="headerlink" href="#module-h2py.parsing" title="Link to this heading"></a></h2>
+<p>Estimate H2 from sequence data.</p>
+<section id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h3>
+<p>import h2py
+L = 100_000_000
+intervals = [[1_000_000 * i, 1_000_000 * (i + 1) for i in range(int(L / 1e6))]]
+sums = {i: h2py.parsing.compute_h2_stats(</p>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><p>vcf_file=”example.vcf.gz”,
+pop_file=”pops.txt”,
+bed_file=”example.bed”,
+interval=interval[i]</p>
+</div></blockquote>
+<p>)</p>
+</div></blockquote>
+<p>for i in range(len(intervals))}</p>
+</div></blockquote>
+<p>means = h2py.parsing.get_means_across_regions(sums)
+means_varcovs = h2py.parsing.bootstrap_data(sums)</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.bootstrap_data">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">bootstrap_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.bootstrap_data" title="Link to this definition"></a></dt>
+<dd><p>Compute a variance/covariance matrix across H2 statistics for each bin,
+by bootstrapping across sums of the statistic precomputed on genomic
+intervals.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.compute_avg_u">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">compute_avg_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.compute_avg_u" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.compute_h2_denoms">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">compute_h2_denoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_map_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bp_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.compute_h2_denoms" title="Link to this definition"></a></dt>
+<dd><p>Compute the denominator of the H2 statistic- the number of pairs of
+accessible sites, binned by distance.</p>
+<p>The last element of the denominator array holds the denominator of the
+heterozygosity statistic, the number of accessible sites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>denoms</strong> – Binned counts of accessible site pairs.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray, <a class="reference internal" href="#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape">shape</a> (<a class="reference internal" href="#h2py.stats.H2stats.n_bins" title="h2py.stats.H2stats.n_bins">n_bins</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.compute_h2_stats">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">compute_h2_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_map_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_pos_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Position(bp)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_map_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Map(cM)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bp_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mut_map_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_genotype_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_haplotypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_denoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats_to_compute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pairwise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ac_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genotype_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genotype_prob_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">haplotype_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.compute_h2_stats" title="Link to this definition"></a></dt>
+<dd><p>Compute H2 statistics on a chromosome or chromosome interval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vcf_file</strong> (<em>str</em><em>, </em><em>path</em>) – Path to VCF file.</p></li>
+<li><p><strong>pop_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to population specification file; a whitespace-separated file with
+two columns, headered ‘sample’ and ‘pop’, which map VCF samples to
+population labels. Samples in the VCF absent from <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> are
+ignored. If None, each VCF sample is assigned to a unique population.</p></li>
+<li><p><strong>pops</strong> (<em>list</em><em>, </em><em>optional</em>) – Populations from <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> for which to compute H2. If None
+(default), all populations specified in <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> are parsed, in
+order of first appearance.</p></li>
+<li><p><strong>bed_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to BED file that specifies accessible sites; required if
+<code class="docutils literal notranslate"><span class="pre">compute_denoms</span></code> is True.</p></li>
+<li><p><strong>chromosome</strong> (<em>str</em><em>, </em><em>optional</em>) – Chromosome to parse (if VCF or BED files record several chromosomes).</p></li>
+<li><p><strong>interval</strong> (<em>tuple</em><em>, </em><em>length 2</em><em>, </em><em>optional</em>) – BED-style (0-indexed, half-open) genomic interval to parse. Sites
+outside the interval are ignored.</p></li>
+<li><p><strong>rec_map_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to recombination map file. This must be whitespace-separated with
+columns labelled ‘Position(bp)’, ‘Map(cM)’.</p></li>
+<li><p><strong>r_bins</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Bin edges, defined in recombination fractions. Required if
+<code class="docutils literal notranslate"><span class="pre">rec_map_file</span></code> is not None.</p></li>
+<li><p><strong>bp_bins</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Bin edges defined in physical units (base pairs).</p></li>
+<li><p><strong>min_bp</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum allowable distance (inclusive) between sites. Any site pairs
+closer together than <code class="docutils literal notranslate"><span class="pre">min_bp</span></code> are skipped.</p></li>
+<li><p><strong>max_bp</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum allowable distance (exclusive) between sites.</p></li>
+<li><p><strong>mut_map_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to mutation map file for weighting site contributions to H2. This
+may be either (1) a .npy array file with site-resolution mutation
+rates, with <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> where data is missing, or (2) a .csv or .tsv
+file (file separator defined by extension) with columns ‘chromStart’,
+‘chromEnd’, and ‘mutRate’ that defines mutation rates on contiguous
+intervals.</p></li>
+<li><p><strong>u_bar</strong> (<em>float</em><em>, </em><em>optional</em>) – Factor by which to divide mutation rates in mutation rate-based
+scaling. If None (default), the average site rate is used. #TODO correct?</p></li>
+<li><p><strong>use_genotype_probs</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), compute stats from genotype probabilities.
+The default behavior is to use genotypes.</p></li>
+<li><p><strong>use_haplotypes</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), treat the input VCF as phased and apply
+haplotype estimators of H2.</p></li>
+<li><p><strong>report</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default), print verbose status messages.</p></li>
+<li><p><strong>compute_denoms</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default), calculate denominators for H2 and H; the numbers of
+accessible site pairs and sites, respectively.</p></li>
+<li><p><strong>stats_to_compute</strong> (<em>tuple</em><em>, </em><em>length 2</em><em>, </em><em>optional</em>) – Holds lists of H2 and H statistics to calculate, ‘H2_{i}_{j}’ and
+‘H_{i}_{j}`. <code class="docutils literal notranslate"><span class="pre">i</span></code> and <code class="docutils literal notranslate"><span class="pre">j</span></code> index <code class="docutils literal notranslate"><span class="pre">pops</span></code>. If None (default),
+compute all statistics for <code class="docutils literal notranslate"><span class="pre">pops</span></code>.</p></li>
+<li><p><strong>pairwise</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, average across within and between-diploid H2 estimators. If
+False, use <code class="docutils literal notranslate"><span class="pre">moments.LD.Parsing</span></code> functions to count two-locus
+genotypes/haplotypes and apply multi-sample estimators to these.
+Pairwise estimators must be used if H2 is estimated from genotype
+probabilities.</p></li>
+<li><p><strong>ac_filter</strong> (<em>bool</em><em>, </em><em>optional</em>) – Allele count filter. If True (default), ignore multiallelic sites.
+Affects only the haplotype estimators; estimation with genotypes or
+genotype probabilities always drops multiallelic sites.</p></li>
+<li><p><strong>filtered</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), skip VCF rows without ‘PASS’ in the ‘FILTER’
+field.</p></li>
+<li><p><strong>genotype_matrix</strong> (<em>GenotypeMatrix.</em>) – Preloaded genotype matrix to parse. Ditto for <code class="docutils literal notranslate"><span class="pre">genotype_prob_matrix</span></code>
+and <code class="docutils literal notranslate"><span class="pre">haplotype_matrix</span></code>. The provision of one of these overrides
+<code class="docutils literal notranslate"><span class="pre">use_genotype_probs</span></code> and <code class="docutils literal notranslate"><span class="pre">use_haplotypes</span></code>.
+# TODO internal masking of preloaded file…</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary with keys ‘bins’, ‘pops’, ‘stats’, ‘sums’, ‘denoms’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.get_bootstrap_replicates">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">get_bootstrap_replicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_reps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.get_bootstrap_replicates" title="Link to this definition"></a></dt>
+<dd><p>Draw several bootstrap replicates from a list of sums computed on genomic
+intervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>all_data</strong> (<em>dict</em>) – Maps genomic interval labels to dicts following the output of TODO</p></li>
+<li><p><strong>n_reps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of bootstrap replicates to conduct. If None, defaults to the
+length of <cite>all_data</cite>.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples per replicate. If None, defaults to the length of
+<cite>all_data</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sets</strong> – List of bootstrap sample means.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.get_means_across_regions">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">get_means_across_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_u_fac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.get_means_across_regions" title="Link to this definition"></a></dt>
+<dd><p>Compute mean statistics across several genomic intervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>all_data</strong> (<em>dict</em>) – Maps genomic interval labels to dicts following the output of TODO</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>means</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list, length n_bins</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.subset_data">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">subset_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.subset_data" title="Link to this definition"></a></dt>
+<dd><p>Subset a dictionary of statistics to given populations/bins.</p>
+</dd></dl>
+
+</section>
+<section id="module-h2py.plotting">
+<span id="h2py-plotting-module"></span><h2>h2py.plotting module<a class="headerlink" href="#module-h2py.plotting" title="Link to this heading"></a></h2>
+<p>Plot observed/expected H2.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.plotting.plot_h2_curves">
+<span class="sig-prename descclassname"><span class="pre">h2py.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_h2_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h2_stats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats_to_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_errs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">244</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.plotting.plot_h2_curves" title="Link to this definition"></a></dt>
+<dd><p>Plot arbitarily many empirical or expected data sets.</p>
+<p>Places each statistic on its own panel and assigns a unique color to each
+dataset.</p>
+<p>Work in progress: not all intended features are implemented.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.plotting.plot_h2_curves_comp">
+<span class="sig-prename descclassname"><span class="pre">h2py.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_h2_curves_comp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h2_stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats_to_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_errs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">244</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.plotting.plot_h2_curves_comp" title="Link to this definition"></a></dt>
+<dd><p>Plot a two-way comparison between an observed an an expected data set.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.plotting.plot_param_distributions">
+<span class="sig-prename descclassname"><span class="pre">h2py.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_param_distributions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.plotting.plot_param_distributions" title="Link to this definition"></a></dt>
+<dd><p>Plot parameter MLE and CI from one or more datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>list</em><em> of </em><em>pandas.DataFrame</em>) – Each dataframe should have columns ‘name’, ‘MLE’, ‘CI_lower’, ‘CI_upper’</p></li>
+<li><p><strong>groups</strong> (<em>list</em><em> of </em><em>dict</em>) – Assign parameters to figure panels; parameters left out are not plotted.
+Should have keys ‘params’ and ‘log’, with the latter a boolean
+specifying whether to use a log scale for the panel.</p></li>
+<li><p><strong>x_labels</strong> (<em>list</em>) – Optional labels for panel x-axes</p></li>
+<li><p><strong>data_labels</strong> (<em>list</em>) – Optional labels for datasets</p></li>
+<li><p><strong>param_labels</strong> (<em>dict</em>) – Optional mapping of parameter names to labels. Not all parameters need
+to be included.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em>)</p></li>
+<li><p><strong>grid_alpha</strong> (<em>float</em>)</p></li>
+<li><p><strong>spread</strong> (<em>float</em>) – Spread of datasets on the y-axis. If 0, error bars overlap on the
+y-axis entirely.</p></li>
+<li><p><strong>capsize</strong> (<em>float</em>) – Cap size for error bars. Useful when <code class="docutils literal notranslate"><span class="pre">spread</span></code> is 0.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-h2py.simulation">
+<span id="h2py-simulation-module"></span><h2>h2py.simulation module<a class="headerlink" href="#module-h2py.simulation" title="Link to this heading"></a></h2>
+<p>Simulate read sequencing to generate synthetic genotype probabilities.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.generate_genotype_probs">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">generate_genotype_probs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_div</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.generate_genotype_probs" title="Link to this definition"></a></dt>
+<dd><p>Generate genotype probabilities for a tree sequence using a simple model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ts</strong> (<em>tskit.TreeSequence</em>) – Mutations should be simulated with the “binary” model.</p></li>
+<li><p><strong>ref_seq</strong> (<em>str</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – Should be composed entirely of {0, 1}.</p></li>
+<li><p><strong>depth</strong> (<em>scalar</em><em>, </em><em>optional</em>) – Target mean coverage depth.</p></li>
+<li><p><strong>p_err</strong> (<em>float</em><em>, </em><em>optional</em>) – Fixed sequencing error probability.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>sites</strong> (<em>np.ndarray, shape (n_sites,)</em>)</p></li>
+<li><p><strong>genotype_probs</strong> (<em>np.ndarray, shape (n_sites, 3 * n_samples)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.generate_read_counts">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">generate_read_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_div</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.generate_read_counts" title="Link to this definition"></a></dt>
+<dd><p>Generate read depths using a simple model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.generate_sam_file">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">generate_sam_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qual_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qual_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.generate_sam_file" title="Link to this definition"></a></dt>
+<dd><p>Generate a SAM file from a tree sequence using a simple sequencing read
+sampling model.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ts</span></code> must result from simulation with the ‘binary’ mutation model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.generate_sam_files">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">generate_sam_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_fmt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chrom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_div</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qual_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qual_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.generate_sam_files" title="Link to this definition"></a></dt>
+<dd><p>Generate SAM files for one or more samples using a simple read sequencing
+model.</p>
+<p>Expects <code class="docutils literal notranslate"><span class="pre">samples</span></code> to correspond in order and length to the number of
+samples in <code class="docutils literal notranslate"><span class="pre">ts</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path_fmt</strong> (<em>str</em>) – Output file path pattern: ‘path/to/desired/output_{sample}.vcf’. Must
+include ‘{sample}’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.get_anc_seq">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">get_anc_seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_div</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.get_anc_seq" title="Link to this definition"></a></dt>
+<dd><p>Randomly generate a sequence with some given divergence from the reference.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.get_ref_seq">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">get_ref_seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.25,</span> <span class="pre">0.25,</span> <span class="pre">0.25,</span> <span class="pre">0.25)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.get_ref_seq" title="Link to this definition"></a></dt>
+<dd><p>Randomly generate a sequence of DNA nucleotide codes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.get_sample_seqs">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">get_sample_seqs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anc_seq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.get_sample_seqs" title="Link to this definition"></a></dt>
+<dd><p>Construct sequences for samples using ‘binary’ mutations embedded in a
+tree sequence and an ancestral sequence.</p>
+<p>Memory-expensive: not suitable for large sample sizes!</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.simulation.ts_to_haplotypes">
+<span class="sig-prename descclassname"><span class="pre">h2py.simulation.</span></span><span class="sig-name descname"><span class="pre">ts_to_haplotypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.simulation.ts_to_haplotypes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-h2py.stats">
+<span id="h2py-stats-module"></span><h2>h2py.stats module<a class="headerlink" href="#module-h2py.stats" title="Link to this heading"></a></h2>
+<p>Classes for handling model expectations computed with moments.Demes.LD.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.stats.H2stats">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.stats.</span></span><span class="sig-name descname"><span class="pre">H2stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for holding expected H2 and heterozygosity statistics computed with
+<code class="docutils literal notranslate"><span class="pre">moments.Demes.LD</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>list</em>) – Arrays of expected H2 statistics. The last element should contain
+one-locus statistics (H, H_ij).</p></li>
+<li><p><strong>pops</strong> (<em>list</em>) – Population labels</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.f2">
+<span class="sig-name descname"><span class="pre">f2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.f2" title="Link to this definition"></a></dt>
+<dd><p>Compute the f2 statistic between populations <code class="docutils literal notranslate"><span class="pre">ii</span></code>, <code class="docutils literal notranslate"><span class="pre">jj</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.f2_matrix">
+<span class="sig-name descname"><span class="pre">f2_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.f2_matrix" title="Link to this definition"></a></dt>
+<dd><p>Compute a symmetric matrix of f2 statistics.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.f3">
+<span class="sig-name descname"><span class="pre">f3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kk</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.f3" title="Link to this definition"></a></dt>
+<dd><p>Compute the statistic f3(ii; jj, kk).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.f4">
+<span class="sig-name descname"><span class="pre">f4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ll</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.f4" title="Link to this definition"></a></dt>
+<dd><p>Compute the statistic f4(ii, jj; kk, ll).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.flat_names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">flat_names</span></span><a class="headerlink" href="#h2py.stats.H2stats.flat_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.from_demes">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_demes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampled_demes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_times</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'simpsons'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.from_demes" title="Link to this definition"></a></dt>
+<dd><p>Compute expected statistics for a Demes model with <code class="docutils literal notranslate"><span class="pre">moments.Demes.LD</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.h">
+<span class="sig-name descname"><span class="pre">h</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.h" title="Link to this definition"></a></dt>
+<dd><p>Access all H statistics, or if <code class="docutils literal notranslate"><span class="pre">pops</span></code> is a str or 2-tuple, access
+the H statistic for a specific population or population pair.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.h2">
+<span class="sig-name descname"><span class="pre">h2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.h2" title="Link to this definition"></a></dt>
+<dd><p>Access all H2 statistics, or if <code class="docutils literal notranslate"><span class="pre">pops</span></code> is a str or 2-tuple, access
+the H2 statistics for a specific population or population pair.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.h2_names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">h2_names</span></span><a class="headerlink" href="#h2py.stats.H2stats.h2_names" title="Link to this definition"></a></dt>
+<dd><p>Access the names of the H2 statistics.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.h_matrix">
+<span class="sig-name descname"><span class="pre">h_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.H2stats.h_matrix" title="Link to this definition"></a></dt>
+<dd><p>Get a matrix of expected within and between-population heterozygosity.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.h_names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">h_names</span></span><a class="headerlink" href="#h2py.stats.H2stats.h_names" title="Link to this definition"></a></dt>
+<dd><p>Access the names of the H statistics.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.n_bins">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_bins</span></span><a class="headerlink" href="#h2py.stats.H2stats.n_bins" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.n_pops">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">n_pops</span></span><a class="headerlink" href="#h2py.stats.H2stats.n_pops" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="h2py.stats.H2stats.names">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">names</span></span><a class="headerlink" href="#h2py.stats.H2stats.names" title="Link to this definition"></a></dt>
+<dd><p>Access the names of H2 and H statistics.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="h2py.stats.LDstats">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">h2py.stats.</span></span><span class="sig-name descname"><span class="pre">LDstats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.stats.LDstats" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LDstats</span></code></p>
+<p>An extension of the moments LDstats class, for handling Hill-Robertson
+statistics alongside H2 in inference.</p>
+</dd></dl>
+
+</section>
+<section id="module-h2py.uncerts">
+<span id="h2py-uncerts-module"></span><h2>h2py.uncerts module<a class="headerlink" href="#module-h2py.uncerts" title="Link to this heading"></a></h2>
+<p>Compute uncertainty in inferred parameters.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.uncerts.compute_lrt_adjustment">
+<span class="sig-prename descclassname"><span class="pre">h2py.uncerts.</span></span><span class="sig-name descname"><span class="pre">compute_lrt_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nested_graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_options_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boot_means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nested_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nested_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.uncerts.compute_lrt_adjustment" title="Link to this definition"></a></dt>
+<dd><p>Compute an adjustment factor for the LRT test statistic after Coffman et
+al 2015.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nested_graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Demes YAML file containing the nested model at MLE parameters.</p></li>
+<li><p><strong>full_graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Demes YAML file containing the alternate/full model at MLE parameters.
+This model must be reducable to the nested model by setting parameters
+<code class="docutils literal notranslate"><span class="pre">nested_params</span></code> to <code class="docutils literal notranslate"><span class="pre">nested_values</span></code>.</p></li>
+<li><p><strong>full_options_file</strong> (<em>str</em><em>, </em><em>path</em>) – Parameter specification file for the <em>full</em> model. Other than the
+presence of nested parameters, this should be identical to the options
+file used to fit the nested model.</p></li>
+<li><p><strong>means</strong> (<em>list</em>) – Mean observed H2 per bin.</p></li>
+<li><p><strong>varcovs</strong> (<em>list</em>) – Bin-specific covariance matrices, estimated with the bootstrap.</p></li>
+<li><p><strong>boot_means</strong> (<em>list</em>) – Bootstrap sample means.</p></li>
+<li><p><strong>nested_params</strong> (<em>list</em>) – Nested parameter names.</p></li>
+<li><p><strong>nested_values</strong> (<em>list</em>) – Values for <code class="docutils literal notranslate"><span class="pre">nested_params</span></code> which reduce the full model to the nested
+model. These can be numbers or the names of other parameters.</p></li>
+<li><p><strong>definitions.</strong> (<em>see compute_uncerts for other parameter</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fac</strong> – Multiplicative adjustment for the observed LRT score, which is twice
+the LL difference between nested and full models.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.uncerts.compute_uncerts">
+<span class="sig-prename descclassname"><span class="pre">h2py.uncerts.</span></span><span class="sig-name descname"><span class="pre">compute_uncerts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boot_means</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GIM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.uncerts.compute_uncerts" title="Link to this definition"></a></dt>
+<dd><p>Compute confidence intervals for MLE parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Path to YAML file containing optimized (MLE) model parameters in Demes
+format.</p></li>
+<li><p><strong>options_file</strong> (<em>str</em><em>, </em><em>path</em>) – Moments.Demes-style parameter specification file.</p></li>
+<li><p><strong>means</strong> (<em>list</em>) – Arrays of mean H2 statistics- one for each bin.</p></li>
+<li><p><strong>varcovs</strong> (<em>list</em>) – Covariance matrices generated with the bootstrap.</p></li>
+<li><p><strong>boot_means</strong> (<em>list</em><em>, </em><em>optional</em>) – Bootstrap sample means; required to estimate uncertainty with the
+Godambe information matrix.</p></li>
+<li><p><strong>pops</strong> (<em>list</em>) – List of populations corresponding to the order of statistics in input
+data. Each element must match the name of a deme in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>r_bins</strong> (<em># TODO</em>) – Array of recombination bin edges.</p></li>
+<li><p><strong>u</strong> (<em>float</em>) – Mutation rate parameter.</p></li>
+<li><p><strong>fit_u</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, treat the mutation rate as a free parameter and estimate its
+uncertainty.</p></li>
+<li><p><strong>phased</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, compute phased model expectations. Should only be True when
+H2 was computed from phased data with the haplotype setting.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Uncertainty estimation method to use. Must be “GIM”, “godambe”, “FIM”,
+or “fisher”. The “FIM”/”fisher” method is misspecified for composite
+likelihood and should be taken critically.</p></li>
+<li><p><strong>return_matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the estimated Fisher or Godambe information matrix
+(as specified by <code class="docutils literal notranslate"><span class="pre">method</span></code>) along with minimal outputs.</p></li>
+<li><p><strong>readout</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, print a table of estimated parameter uncertainties.</p></li>
+<li><p><strong>report</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, print progress messages.</p></li>
+<li><p><strong>delta</strong> (<em>float</em><em>, </em><em>optional</em>) – Fractional step size for finite difference calculations.</p></li>
+<li><p><strong>bounds</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Optional upper/lower bounds on parameters. If bounds are not specified,
+they are constructed using <code class="docutils literal notranslate"><span class="pre">options_file</span></code>.</p></li>
+<li><p><strong>steps</strong> (<em>np.ndarray</em><em>, </em><a class="reference internal" href="#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape"><em>shape</em></a><em> (</em><em>n_params</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – Step sizes for finite difference calculations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>param_names</strong> (<em>list</em>) – Parameter names as defined in <code class="docutils literal notranslate"><span class="pre">options_file</span></code>.</p></li>
+<li><p><strong>params</strong> (<em>np.ndarray, shape (n_params,)</em>) – MLE parameter values loaded from <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>uncerts</strong> (<em>np.ndarray, shape (n_params,)</em>) – Estimated uncertainties, in standard deviations.</p></li>
+<li><p><strong>matrix</strong> (<em>np.ndarray, shape (n_params, n_params), optional</em>) – Fisher or Godambe information matrix; returned if <code class="docutils literal notranslate"><span class="pre">return_matrix</span></code> is
+True.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-h2py.utils">
+<span id="h2py-utils-module"></span><h2>h2py.utils module<a class="headerlink" href="#module-h2py.utils" title="Link to this heading"></a></h2>
+<p>Diverse utilities.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.utils.read_fasta_file">
+<span class="sig-prename descclassname"><span class="pre">h2py.utils.</span></span><span class="sig-name descname"><span class="pre">read_fasta_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fasta_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.utils.read_fasta_file" title="Link to this definition"></a></dt>
+<dd><blockquote>
+<div><p>Read a .fasta file and return sequence(s) and header label(s).</p>
+<p>Sequence headers should be preceded by “</p>
+</div></blockquote>
+<p>&gt;”.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>sequences<span class="classifier">list of str</span></dt><dd><p>Sequences contained in the input file; a list is returned even if only
+one sequence was read.</p>
+</dd>
+<dt>labels<span class="classifier">list of str</span></dt><dd><p>Header labels, stripped of the “&gt;” character.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.utils.timestamp">
+<span class="sig-prename descclassname"><span class="pre">h2py.utils.</span></span><span class="sig-name descname"><span class="pre">timestamp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#h2py.utils.timestamp" title="Link to this definition"></a></dt>
+<dd><p>Get a string representing the date and time at the moment.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.utils.write_fasta_file">
+<span class="sig-prename descclassname"><span class="pre">h2py.utils.</span></span><span class="sig-name descname"><span class="pre">write_fasta_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.utils.write_fasta_file" title="Link to this definition"></a></dt>
+<dd><p>Write a fasta or multi-fasta file containing given sequence(s), label(s).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+<li><p><strong>sequences</strong> (<em>list</em><em> of </em><em>str</em>)</p></li>
+<li><p><strong>labels</strong> (<em>list</em><em> of </em><em>str</em>) – Labels should omit the “&gt;” header character, which is appended here.</p></li>
+<li><p><strong>line_width</strong> (<em>int</em>) – Maximum line width for output file (default <cite>80</cite>).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-h2py">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-h2py" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nicholas Collier.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

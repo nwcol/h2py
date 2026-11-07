@@ -1,0 +1,10 @@
+demes>=0.2
+demesdraw
+matplotlib>=3.10
+moments-popgen>=1.6
+numpy>=2.0
+pandas>=3.0
+scipy>=1.16
+msprime>=1.0
+tskit>=1.0
+pytest>=9.0

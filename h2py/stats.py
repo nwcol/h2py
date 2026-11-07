@@ -16,7 +16,11 @@ class H2stats:
 
     Parameters
     ----------
-
+    data : list
+        Arrays of expected H2 statistics. The last element should contain
+        one-locus statistics (H, H_ij).
+    pops : list
+        Population labels
     """
 
     def __init__(self, data, pops):
@@ -24,8 +28,7 @@ class H2stats:
         self.pops = pops
 
     def __getitem__(self, key):
-        """
-        """
+        """Index ``self.data``."""
         if isinstance(key, int):
             return self.data[key]
         elif isinstance(key, slice):
@@ -67,10 +70,12 @@ class H2stats:
 
     @property
     def h_names(self):
+        """Access the names of the H statistics."""
         return utils._h_names(self.n_pops)
 
     @property
     def h2_names(self):
+        """Access the names of the H2 statistics."""
         return utils._h2_names(self.n_pops)
 
     def h(self, pops=None):
@@ -97,7 +102,7 @@ class H2stats:
 
     def h_matrix(self):
         """
-        Get a matrix of expected heterozygosities.
+        Get a matrix of expected within and between-population heterozygosity.
         """
         n_pops = len(self.pops)
         mat = np.zeros((n_pops, n_pops), dtype=np.float64)
@@ -108,20 +113,45 @@ class H2stats:
         return mat
 
     def f2(self, ii, jj):
-        idx_ij = self.h_names.index(_sort_name(f"H_{ii}_{jj}"))
-        h_ij = self.h()[idx_ij]
+        """
+        Compute the f2 statistic between populations ``ii``, ``jj``.
+        """
+        h_ij = self.h()[self.h_names.index(_sort_name(f"H_{ii}_{jj}"))]
         h_i = self.h()[self.h_names.index(f"H_{ii}_{ii}")]
         h_j = self.h()[self.h_names.index(f"H_{jj}_{jj}")]
         return h_ij - (h_i + h_j) / 2
 
     def f2_matrix(self):
-        return
+        """
+        Compute a symmetric matrix of f2 statistics.
+        """
+        n_pops = len(self.pops)
+        matrix = np.ma.zeros((n_pops, n_pops), dtype=np.float64)
+        for ii in range(n_pops):
+            matrix[ii, ii].mask = True
+            for jj in range(ii + 1, n_pops):
+                matrix[ii, jj] = matrix[jj, ii] = self.f2(ii, jj)
+        return matrix
 
     def f3(self, ii, jj, kk):
-        return
+        """
+        Compute the statistic f3(ii; jj, kk).
+        """
+        h_ij = self.h()[self.h_names.index(_sort_name(f"H_{ii}_{jj}"))]
+        h_ik = self.h()[self.h_names.index(_sort_name(f"H_{ii}_{kk}"))]
+        h_jk = self.h()[self.h_names.index(_sort_name(f"H_{jj}_{kk}"))]
+        h_i = self.h()[self.h_names.index(f"H_{ii}_{ii}")]
+        return (h_ij + h_ik - h_i - h_jk) / 2
 
     def f4(self, ii, jj, kk, ll):
-        return
+        """
+        Compute the statistic f4(ii, jj; kk, ll).
+        """
+        h_ik = self.h()[self.h_names.index(_sort_name(f"H_{ii}_{kk}"))]
+        h_il = self.h()[self.h_names.index(_sort_name(f"H_{ii}_{ll}"))]
+        h_jk = self.h()[self.h_names.index(_sort_name(f"H_{jj}_{kk}"))]
+        h_jl = self.h()[self.h_names.index(_sort_name(f"H_{jj}_{ll}"))]
+        return (h_ik - h_il - h_jk + h_jl) / 2
 
     @classmethod
     def from_demes(
@@ -139,7 +169,6 @@ class H2stats:
         """
         Compute expected statistics for a Demes model with ``moments.Demes.LD``.
 
-        TODO document
         Parameters
         ----------
         """
@@ -209,12 +238,10 @@ class H2stats:
         return cls(data, sampled_demes)
 
 
-class _LDstats(moments.LD.LDstats):
+class LDstats(moments.LD.LDstats):
     """
     An extension of the moments LDstats class, for handling Hill-Robertson
     statistics alongside H2 in inference.
-
-    Under construction.
     """
 
     def __init__(self):
@@ -227,7 +254,7 @@ class _LDstats(moments.LD.LDstats):
 
 
 def _sort_name(name):
-    """Maps degenerate names H_0_1, H_1_0 to the sorted from H_0_1."""
+    """Map degenerate names H_0_1, H_1_0 to the sorted from H_0_1."""
     split_name = name.split("_")
     symbol = split_name[0]
     idxs = sorted([int(x) for x in split_name[1:]])

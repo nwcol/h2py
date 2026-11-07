@@ -1,10 +1,5 @@
 """
-Infer parameters using maximum likelihood, after ``moments.Demes``.
-
-Usage
------
-
-TODO
+Infer the parameters of demographic models using maximum likelihood.
 """
 
 import collections
@@ -25,7 +20,7 @@ import random
 import scipy
 
 from . import utils, parsing, stats
-from .stats import H2stats, _LDstats
+from .stats import H2stats, LDstats
 from .utils import timestamp
 
 
