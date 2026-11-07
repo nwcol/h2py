@@ -1,11 +1,10 @@
 ## `h2py`: a tool for inferring multi-population history from ancient DNA
 
-This is the repository for `h2py`, a Python package that extends `moments-LD`
-(https://github.com/MomentsLD/moments) to study ancient population history
-with H<sub>2</sub>.
-H<sub>2</sub> is a two-locus genetic statistic, defined as the probability that
-two genome copies differ by state at two loci that span some recombination
-fraction.
+This is the `h2py`, a Python package for evolutionary inference with sparse
+sampling.
+`h2py` is an extension of `moments.LD` (https://github.com/MomentsLD/moments)
+built around H<sub>2</sub>, a two-locus summary statistic.
+See the documentation for more details, examples, and the API.
 
 ### Contents
 
@@ -25,78 +24,33 @@ pip install -r requirements.txt
 pip install .
 ```
 
+Dependencies of `h2py` include `moments`, `demes`, `numpy`, and `scipy`.
+To run tests, you will also need to install `pytest`.
 If you want to edit the code, it's useful to perform an editable install:
 
 ```
 pip install -e .
 ```
 
-### Dependencies
+### Changelog
 
-
-### Examples
-
-
-#### Estimating H<sub>2</sub> from high-coverage data
-
-
-```
-sample1 pop1
-sample2 pop2
-sample3 pop3
-```
-
-
-```
-import h2py
-
-vcf_file = "my/path/input.vcf"
-pop_file = "my/path/pops.txt"
-rec_file = "my/path/rec_map.tsv"
-bed_file = "my/bath/filter.bed"
-
-sums = h2py.parsing.compute_h2_stats(
-    vcf_file=vcf_file, pop_file=pop_file, bed_file=bed_file,
-    rec_map_file=rec_file, rec_pos_col="Position", rec_map_col="Map"
-)
-```
-
-Here, `sums` is a dictionary with these keys:
-
-- `"pops"`: A list of population labels, derived from `pop_file`.
-
-- `"stats"`: A tuple of labels for H<sub>2</sub> and H statisitcs. These have
-the form `"H2_{i}_{j}"`, where `i` and `j` index population labels..
-
-- `"bins"`: A list of tuples, each defining the lower and upper bound
-of a bin.
-
-- `"sums"`: Raw sums of H<sub>2</sub> statistics listed in `"stats"`. The last
-element is an array of one-locus diversity statistics.
-
-- `"denoms"`: Denominators for normalizing H<sub>2</sub> and H statistics; one
-per bin.
-
-To compute means and bootstrap covariances across many intervals, we can use:
-
-```
-intervals = [[5_000_000 * i, 5_000_000 * (i + 1)] for i in range(20)]
-all_sums = {
-    i: h2py.parsing.compute_h2_stats(
-        vcf_file=vcf_file, pop_file=pop_file, bed_file=bed_file,
-        rec_map_file=rec_file, rec_pos_col="Position", rec_map_col="Map",
-        interval=intervals[i]
-    ) for i in range(len(intervals))}
-means, varcovs = h2py.parsing.bootstrap_data(all_sums)
-```
-
-#### Inferring demographic parameters
-
-
-#### Quantifying parameter uncertainty
-
-
-#### Performing model choice
-
+Version history is recorded in the documentation.
 
 ### Citing the package
+
+If you use `h2py` in your research, please cite
+
+Collier, N. W., Gravel, S., and Ragsdale, A. P. (2026) 
+Inferring hominin history with recurrent gene flow from single unphased genomes and a two-locus statistic.
+BioRxiv, doi: [https://doi.org/10.64898/2026.04.11.717825](https://doi.org/10.64898/2026.04.11.717825)
+
+```
+@article{collier2026,
+  title={Inferring hominin history with recurrent gene flow from single unphased genomes and a two-locus statistic},
+  author={Collier, Nicholas W and Gravel, Simon and Ragsdale, Aaron P},
+  journal={bioRxiv},
+  year={2026},
+  doi={10.64898/2026.04.11.717825}
+}
+```
+
