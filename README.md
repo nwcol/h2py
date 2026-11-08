@@ -64,6 +64,9 @@ Planned elements include:
 
 - Monte-Carlo two-locus genealogical simulations.
 
+This repository holds [examples](examples) that illustrate usage with
+simulated data and some generic command-line [scripts](scripts).
+
 ### Changelog
 
 Version history is recorded in the documentation.
