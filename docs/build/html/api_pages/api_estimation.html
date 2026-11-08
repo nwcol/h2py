@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API for estimation &mdash; h2py 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API for inference and plotting" href="api_inference.html" />
+    <link rel="prev" title="Estimating parameter uncertainty" href="../pages/uncertainty.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            h2py
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Walkthrough</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pages/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/estimation.html">Estimating H2 from sequence data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/bootstrap.html">Bootstrapping statistics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/specification.html">Specifying demographic models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/inference.html">Inferring population history with H2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/uncertainty.html">Estimating parameter uncertainty</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API for estimation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#parsing-sequence-data">Parsing sequence data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#h2py.parsing.compute_h2_stats"><code class="docutils literal notranslate"><span class="pre">compute_h2_stats()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bootstrap-and-subset-functions">Bootstrap and subset functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_inference.html">API for inference and plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_data_structures.html">API for data structures</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">h2py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API for estimation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api_pages/api_estimation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-for-estimation">
+<span id="sec-api-estimation"></span><h1>API for estimation<a class="headerlink" href="#api-for-estimation" title="Link to this heading"></a></h1>
+<section id="parsing-sequence-data">
+<h2>Parsing sequence data<a class="headerlink" href="#parsing-sequence-data" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.parsing.compute_h2_stats">
+<span class="sig-prename descclassname"><span class="pre">h2py.parsing.</span></span><span class="sig-name descname"><span class="pre">compute_h2_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcf_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bed_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_map_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_pos_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Position(bp)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rec_map_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Map(cM)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bp_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mut_map_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_genotype_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_haplotypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_denoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats_to_compute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pairwise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ac_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genotype_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genotype_prob_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">haplotype_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.parsing.compute_h2_stats" title="Link to this definition"></a></dt>
+<dd><p>Compute H2 statistics on a chromosome or chromosome interval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vcf_file</strong> (<em>str</em><em>, </em><em>path</em>) – Path to VCF file.</p></li>
+<li><p><strong>pop_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to population specification file; a whitespace-separated file with
+two columns, headered ‘sample’ and ‘pop’, which map VCF samples to
+population labels. Samples in the VCF absent from <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> are
+ignored. If None, each VCF sample is assigned to a unique population.</p></li>
+<li><p><strong>pops</strong> (<em>list</em><em>, </em><em>optional</em>) – Populations from <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> for which to compute H2. If None
+(default), all populations specified in <code class="docutils literal notranslate"><span class="pre">pop_file</span></code> are parsed, in
+order of first appearance.</p></li>
+<li><p><strong>bed_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to BED file that specifies accessible sites; required if
+<code class="docutils literal notranslate"><span class="pre">compute_denoms</span></code> is True.</p></li>
+<li><p><strong>chromosome</strong> (<em>str</em><em>, </em><em>optional</em>) – Chromosome to parse (if VCF or BED files record several chromosomes).</p></li>
+<li><p><strong>interval</strong> (<em>tuple</em><em>, </em><em>length 2</em><em>, </em><em>optional</em>) – BED-style (0-indexed, half-open) genomic interval to parse. Sites
+outside the interval are ignored.</p></li>
+<li><p><strong>rec_map_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to recombination map file. This must be whitespace-separated with
+columns labelled ‘Position(bp)’, ‘Map(cM)’.</p></li>
+<li><p><strong>r_bins</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Bin edges, defined in recombination fractions. Required if
+<code class="docutils literal notranslate"><span class="pre">rec_map_file</span></code> is not None.</p></li>
+<li><p><strong>bp_bins</strong> (<em>array-like</em><em>, </em><em>optional</em>) – Bin edges defined in physical units (base pairs).</p></li>
+<li><p><strong>min_bp</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum allowable distance (inclusive) between sites. Any site pairs
+closer together than <code class="docutils literal notranslate"><span class="pre">min_bp</span></code> are skipped.</p></li>
+<li><p><strong>max_bp</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum allowable distance (exclusive) between sites.</p></li>
+<li><p><strong>mut_map_file</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Path to mutation map file for weighting site contributions to H2. This
+may be either (1) a .npy array file with site-resolution mutation
+rates, with <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> where data is missing, or (2) a .csv or .tsv
+file (file separator defined by extension) with columns ‘chromStart’,
+‘chromEnd’, and ‘mutRate’ that defines mutation rates on contiguous
+intervals.</p></li>
+<li><p><strong>u_bar</strong> (<em>float</em><em>, </em><em>optional</em>) – Factor by which to divide mutation rates in mutation rate-based
+scaling. If None (default), the average site rate is used. #TODO correct?</p></li>
+<li><p><strong>use_genotype_probs</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), compute stats from genotype probabilities.
+The default behavior is to use genotypes.</p></li>
+<li><p><strong>use_haplotypes</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), treat the input VCF as phased and apply
+haplotype estimators of H2.</p></li>
+<li><p><strong>report</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default), print verbose status messages.</p></li>
+<li><p><strong>compute_denoms</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default), calculate denominators for H2 and H; the numbers of
+accessible site pairs and sites, respectively.</p></li>
+<li><p><strong>stats_to_compute</strong> (<em>tuple</em><em>, </em><em>length 2</em><em>, </em><em>optional</em>) – Holds lists of H2 and H statistics to calculate, ‘H2_{i}_{j}’ and
+‘H_{i}_{j}`. <code class="docutils literal notranslate"><span class="pre">i</span></code> and <code class="docutils literal notranslate"><span class="pre">j</span></code> index <code class="docutils literal notranslate"><span class="pre">pops</span></code>. If None (default),
+compute all statistics for <code class="docutils literal notranslate"><span class="pre">pops</span></code>.</p></li>
+<li><p><strong>pairwise</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, average across within and between-diploid H2 estimators. If
+False, use <code class="docutils literal notranslate"><span class="pre">moments.LD.Parsing</span></code> functions to count two-locus
+genotypes/haplotypes and apply multi-sample estimators to these.
+Pairwise estimators must be used if H2 is estimated from genotype
+probabilities.</p></li>
+<li><p><strong>ac_filter</strong> (<em>bool</em><em>, </em><em>optional</em>) – Allele count filter. If True (default), ignore multiallelic sites.
+Affects only the haplotype estimators; estimation with genotypes or
+genotype probabilities always drops multiallelic sites.</p></li>
+<li><p><strong>filtered</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default False), skip VCF rows without ‘PASS’ in the ‘FILTER’
+field.</p></li>
+<li><p><strong>genotype_matrix</strong> (<em>GenotypeMatrix.</em>) – Preloaded genotype matrix to parse. Ditto for <code class="docutils literal notranslate"><span class="pre">genotype_prob_matrix</span></code>
+and <code class="docutils literal notranslate"><span class="pre">haplotype_matrix</span></code>. The provision of one of these overrides
+<code class="docutils literal notranslate"><span class="pre">use_genotype_probs</span></code> and <code class="docutils literal notranslate"><span class="pre">use_haplotypes</span></code>.
+# TODO internal masking of preloaded file…</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary with keys ‘bins’, ‘pops’, ‘stats’, ‘sums’, ‘denoms’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="bootstrap-and-subset-functions">
+<h2>Bootstrap and subset functions<a class="headerlink" href="#bootstrap-and-subset-functions" title="Link to this heading"></a></h2>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../pages/uncertainty.html" class="btn btn-neutral float-left" title="Estimating parameter uncertainty" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_inference.html" class="btn btn-neutral float-right" title="API for inference and plotting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nicholas Collier.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

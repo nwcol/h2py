@@ -1,3 +1,4 @@
+.. _sec_specification:
 
 =============================
 Specifying demographic models

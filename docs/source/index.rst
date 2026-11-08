@@ -6,19 +6,28 @@
 Welcome to the h2py documentation
 =================================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents
-   
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Walkthrough
+
    pages/intro
+   pages/changelog
    pages/installation
-   pages/estimating
+   pages/estimation
    pages/bootstrap
    pages/specification
    pages/inference
    pages/uncertainty
-   pages/api
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+
+   api_pages/api_estimation
+   api_pages/api_inference
+   api_pages/api_data_structures
+

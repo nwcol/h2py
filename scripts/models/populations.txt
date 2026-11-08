@@ -1,0 +1,3 @@
+sample1 Pop1
+sample2 Pop2
+sample3 Pop3

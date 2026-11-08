@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API for inference and plotting &mdash; h2py 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API for data structures" href="api_data_structures.html" />
+    <link rel="prev" title="API for estimation" href="api_estimation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            h2py
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pages/intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/bootstrap.html">Bootstrapping statistics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/specification.html">Specifying demographic models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/inference.html">Inferring population history with H2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pages/uncertainty.html">Estimating parameter uncertainty</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api_estimation.html">API for estimation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API for inference and plotting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#inference">Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-function">Optimization function</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference.optimize"><code class="docutils literal notranslate"><span class="pre">optimize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-internals">Optimization internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._objective_func"><code class="docutils literal notranslate"><span class="pre">_objective_func()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._perturb_params"><code class="docutils literal notranslate"><span class="pre">_perturb_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._compute_composite_ll"><code class="docutils literal notranslate"><span class="pre">_compute_composite_ll()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._compute_bin_ll"><code class="docutils literal notranslate"><span class="pre">_compute_bin_ll()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._compute_ll"><code class="docutils literal notranslate"><span class="pre">_compute_ll()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.inference._compute_exact_bin_ll"><code class="docutils literal notranslate"><span class="pre">_compute_exact_bin_ll()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#uncertainty">Uncertainty</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-functions">Uncertainty functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#h2py.uncerts.compute_uncerts"><code class="docutils literal notranslate"><span class="pre">compute_uncerts()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty-internals">Uncertainty internals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_data_structures.html">API for data structures</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">h2py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API for inference and plotting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api_pages/api_inference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-for-inference-and-plotting">
+<span id="sec-api-inference"></span><h1>API for inference and plotting<a class="headerlink" href="#api-for-inference-and-plotting" title="Link to this heading"></a></h1>
+<section id="inference">
+<h2>Inference<a class="headerlink" href="#inference" title="Link to this heading"></a></h2>
+<section id="optimization-function">
+<h3>Optimization function<a class="headerlink" href="#optimization-function" title="Link to this heading"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference.optimize">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fmin'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference.optimize" title="Link to this definition"></a></dt>
+<dd><p>Fit the parameters of a demographic model to observed H2 using ML.</p>
+<p>Mostly mimics the functionality of <code class="docutils literal notranslate"><span class="pre">moments.Demes.Inference.optimize_LD</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Demes YAML file.</p></li>
+<li><p><strong>options_file</strong> (<em>str</em><em>, </em><em>path</em>) – Moments.Demes-style parameter options file. TODO link to docs</p></li>
+<li><p><strong>means</strong> (<em>list</em>) – Arrays with mean observed statistics.</p></li>
+<li><p><strong>varcovs</strong> (<em>list</em>) – Covariance matrices generated with the bootstrap.</p></li>
+<li><p><strong>pops</strong> (<em>list</em>) – List of population labels corresponding to data. Each element should
+match the name of a deme in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>r_bins</strong> (<em>np.ndarray</em>) – Array of recombination bin edges corresponding to data.</p></li>
+<li><p><strong>u</strong> (<em>float</em>) – Mutation rate parameter.</p></li>
+<li><p><strong>fit_u</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, fit the mutation rate as a free parameter.</p></li>
+<li><p><strong>phased</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, compute phased expected H2. Should be used only when observed
+H2 was computed from phased data with the haplotype setting.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – SciPy optimization function to use. Must be “fmin”, “powell”, or
+“lbfgsb”.</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of optimization iterations.</p></li>
+<li><p><strong>use_log</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, optimize over the natural logarithm of parameters.</p></li>
+<li><p><strong>report</strong> (<em>int</em><em>, </em><em>optional</em>) – If &gt; 0, print status messages every <code class="docutils literal notranslate"><span class="pre">report</span></code> objective function calls.</p></li>
+<li><p><strong>output</strong> (<em>str</em><em>, </em><em>path</em><em>, </em><em>optional</em>) – Save a graph with optimized parameters to this path.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, overwrite any existing file at <code class="docutils literal notranslate"><span class="pre">output</span></code>.</p></li>
+<li><p><strong>perturb</strong> (<em>float</em><em>, </em><em>optional</em>) – If a positive float, perturb parameters by as much as <code class="docutils literal notranslate"><span class="pre">|p</span> <span class="pre">*</span> <span class="pre">perturb|</span></code>
+from the initial guess given in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>param_names</strong> (<em>list</em>)</p></li>
+<li><p><strong>params_opt</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>ll_opt</strong> (<em>float</em>) – Log-likelihood achieved in optimization.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="optimization-internals">
+<h3>Optimization internals<a class="headerlink" href="#optimization-internals" title="Link to this heading"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._objective_func">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_objective_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">builder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampled_demes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_times</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._objective_func" title="Link to this definition"></a></dt>
+<dd><p>Objective function for parameter optimization.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._perturb_params">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_perturb_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._perturb_params" title="Link to this definition"></a></dt>
+<dd><p>Randomly/uniformly perturb params on <code class="docutils literal notranslate"><span class="pre">[p*(1-fold),</span> <span class="pre">p*(1+fold)]</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._compute_composite_ll">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_compute_composite_ll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._compute_composite_ll" title="Link to this definition"></a></dt>
+<dd><p>Compute the sum of bin log-likelihoods.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._compute_bin_ll">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_compute_bin_ll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._compute_bin_ll" title="Link to this definition"></a></dt>
+<dd><p>Compute LL in each bin and return an array of bin LLs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._compute_ll">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_compute_ll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_varcov</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._compute_ll" title="Link to this definition"></a></dt>
+<dd><p>Compute the log of the gaussian law evaluated at <code class="docutils literal notranslate"><span class="pre">x</span></code> with a pre-inverted
+var/cov matrix. Drops the constant coefficient.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.inference._compute_exact_bin_ll">
+<span class="sig-prename descclassname"><span class="pre">h2py.inference.</span></span><span class="sig-name descname"><span class="pre">_compute_exact_bin_ll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.inference._compute_exact_bin_ll" title="Link to this definition"></a></dt>
+<dd><p>Compute the log-likelihood in bins, without dropping the coefficient.</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="uncertainty">
+<h2>Uncertainty<a class="headerlink" href="#uncertainty" title="Link to this heading"></a></h2>
+<section id="uncertainty-functions">
+<h3>Uncertainty functions<a class="headerlink" href="#uncertainty-functions" title="Link to this heading"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="h2py.uncerts.compute_uncerts">
+<span class="sig-prename descclassname"><span class="pre">h2py.uncerts.</span></span><span class="sig-name descname"><span class="pre">compute_uncerts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varcovs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boot_means</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GIM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#h2py.uncerts.compute_uncerts" title="Link to this definition"></a></dt>
+<dd><p>Compute confidence intervals for MLE parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>path</em>) – Path to YAML file containing optimized (MLE) model parameters in Demes
+format.</p></li>
+<li><p><strong>options_file</strong> (<em>str</em><em>, </em><em>path</em>) – Moments.Demes-style parameter specification file.</p></li>
+<li><p><strong>means</strong> (<em>list</em>) – Arrays of mean H2 statistics- one for each bin.</p></li>
+<li><p><strong>varcovs</strong> (<em>list</em>) – Covariance matrices generated with the bootstrap.</p></li>
+<li><p><strong>boot_means</strong> (<em>list</em><em>, </em><em>optional</em>) – Bootstrap sample means; required to estimate uncertainty with the
+Godambe information matrix.</p></li>
+<li><p><strong>pops</strong> (<em>list</em>) – List of populations corresponding to the order of statistics in input
+data. Each element must match the name of a deme in <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>r_bins</strong> (<em># TODO</em>) – Array of recombination bin edges.</p></li>
+<li><p><strong>u</strong> (<em>float</em>) – Mutation rate parameter.</p></li>
+<li><p><strong>fit_u</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, treat the mutation rate as a free parameter and estimate its
+uncertainty.</p></li>
+<li><p><strong>phased</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, compute phased model expectations. Should only be True when
+H2 was computed from phased data with the haplotype setting.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Uncertainty estimation method to use. Must be “GIM”, “godambe”, “FIM”,
+or “fisher”. The “FIM”/”fisher” method is misspecified for composite
+likelihood and should be taken critically.</p></li>
+<li><p><strong>return_matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the estimated Fisher or Godambe information matrix
+(as specified by <code class="docutils literal notranslate"><span class="pre">method</span></code>) along with minimal outputs.</p></li>
+<li><p><strong>readout</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, print a table of estimated parameter uncertainties.</p></li>
+<li><p><strong>report</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, print progress messages.</p></li>
+<li><p><strong>delta</strong> (<em>float</em><em>, </em><em>optional</em>) – Fractional step size for finite difference calculations.</p></li>
+<li><p><strong>bounds</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Optional upper/lower bounds on parameters. If bounds are not specified,
+they are constructed using <code class="docutils literal notranslate"><span class="pre">options_file</span></code>.</p></li>
+<li><p><strong>steps</strong> (<em>np.ndarray</em><em>, </em><a class="reference internal" href="../h2py.html#h2py.matrices.GenotypeMatrix.shape" title="h2py.matrices.GenotypeMatrix.shape"><em>shape</em></a><em> (</em><em>n_params</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – Step sizes for finite difference calculations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>param_names</strong> (<em>list</em>) – Parameter names as defined in <code class="docutils literal notranslate"><span class="pre">options_file</span></code>.</p></li>
+<li><p><strong>params</strong> (<em>np.ndarray, shape (n_params,)</em>) – MLE parameter values loaded from <code class="docutils literal notranslate"><span class="pre">graph_file</span></code>.</p></li>
+<li><p><strong>uncerts</strong> (<em>np.ndarray, shape (n_params,)</em>) – Estimated uncertainties, in standard deviations.</p></li>
+<li><p><strong>matrix</strong> (<em>np.ndarray, shape (n_params, n_params), optional</em>) – Fisher or Godambe information matrix; returned if <code class="docutils literal notranslate"><span class="pre">return_matrix</span></code> is
+True.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="uncertainty-internals">
+<h3>Uncertainty internals<a class="headerlink" href="#uncertainty-internals" title="Link to this heading"></a></h3>
+</section>
+</section>
+<section id="plotting">
+<h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api_estimation.html" class="btn btn-neutral float-left" title="API for estimation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_data_structures.html" class="btn btn-neutral float-right" title="API for data structures" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nicholas Collier.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

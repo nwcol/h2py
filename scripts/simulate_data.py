@@ -6,7 +6,7 @@ import argparse
 import demes
 import h2py
 from h2py.utils import timestamp
-import io
+import tempfile
 import msprime
 import numpy as np
 import pickle
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         bin_spec = args.bins.split(",")
         bins_start, bins_end =float(bin_spec[0]), float(bin_spec[1])
         n_bins = int(bin_spec[2])
-    bins = np.logspace(np.log10(bin_start), np.log10(bin_end), n_bins + 1)
+    r_bins = np.logspace(np.log10(bins_start), np.log10(bins_end), n_bins + 1)
     raw_sums = dict()
     # Iterate over tree sequences to simulate mutation and parse H2
     for ii, ts in enumerate(tree_seqs):
