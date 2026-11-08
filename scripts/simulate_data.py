@@ -1,5 +1,5 @@
 """
-Simulate --n-reps genomic windows and compute H_2 from them.
+Simulate --n-reps genomic windows and compute H2 across them.
 """
 
 import argparse
@@ -15,17 +15,23 @@ import sys
 
 
 def get_args():
-    parser = argparse.ArgumentParser()
-    # Required
+    parser = argparse.ArgumentParser(
+        description="Simulate --n-reps genomic windows with uniform "
+                    "recombination/mutation, and compute H2 across them.")
     parser.add_argument("-g", "--graph", required=True)
     parser.add_argument("-p", "--pops", required=True)
     parser.add_argument("-o", "--out", required=True)
-    # Optional
-    parser.add_argument("-u", type=float, default=1.3e-8)
-    parser.add_argument("-r", type=float, default=1e-8)
-    parser.add_argument("-L", type=float, default=1e6)
-    parser.add_argument("-n", "--n-reps", type=int, default=500)
-    parser.add_argument("--n-samples", type=int, default=1)
+    # Optional arguments
+    parser.add_argument("-u", type=float, default=1.5e-8,
+                        help="Mutation rate (default 1.5e-8).")
+    parser.add_argument("-r", type=float, default=1e-8,
+                        help="Recombination rate (default 1e-8).")
+    parser.add_argument("-L", type=float, default=1e6,
+                        help="Window sequence length (default 1e6).")
+    parser.add_argument("-n", "--n-reps", type=int, default=100,
+                        help="Number of windows to simulate (default 100)")
+    parser.add_argument("--n-samples", type=int, default=1,
+                        help="Number of diploid samples/population (default 1)")
     return parser.parse_args()
 
 
@@ -75,5 +81,5 @@ if __name__ == "__main__":
     # Write to disk
     with open(args.out, "wb") as fout:
         pickle.dump(boot, fout)
-    print(timestamp(), "genome simulation (H_2) complete!")
+    print(timestamp(), "Simulation and H2 estimation complete!")
 

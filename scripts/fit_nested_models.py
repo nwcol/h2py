@@ -1,7 +1,12 @@
 """
-Fit nested null/alternative models to H_2 stats. Alternative model fits begin
-at the MLE of the null model. Parameters that do not exist in the null model
-start at values specified by the  --nested argument.
+Fit nested null/alternative models; initiate alternative model parameters at
+the best-fit values of the null model.
+
+Use the --nested argument to provide initial values for alternative model
+parameters that are not present in the null model. For example, if the
+alternative model includes an instantaneous admixture pulse, with time
+parameter Tpulse and proportion Fpulse, we can set initial values with
+    --nested Tpulse 1e5 Fpulse 0.1
 """
 
 import argparse
@@ -20,20 +25,34 @@ import pickle
 
 
 def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data", required=True)
-    parser.add_argument("-g0", "--graph0", required=True)
-    parser.add_argument("-p0", "--params0", required=True)
-    parser.add_argument("-g1", "--graph1", required=True)
-    parser.add_argument("-p1", "--params1", required=True)
+    parser = argparse.ArgumentParser(
+        description="Fit nested null/alternative models; initiate alternative "
+                    "model parameters at best-fit values of the null model.")
+    parser.add_argument("-d", "--data", required=True,
+                        help="File with bootstrapped statistics (.pkl).")
+    parser.add_argument("-g0", "--graph0", required=True,
+                        help="Demes file with null model (.yaml).")
+    parser.add_argument("-p0", "--params0", required=True,
+                        help="Options file for null model (.yaml).")
+    parser.add_argument("-g1", "--graph1", required=True,
+                        help="Demes file with alternative model (.yaml).")
+    parser.add_argument("-p1", "--params1", required=True,
+                        help="Options file for alternative model (.yaml).")
     parser.add_argument("--nested", nargs="*",
-                        help="nested parameter-value pairs, e.g. T_x 1000 p_x 0.0")
-    parser.add_argument("-o", "--out", required=True,
-                        help="prefix for output files, e.g., {out}_0.yaml")
+                        help="Nested parameter-value pairs (see docstring).")
+    parser.add_argument("-o", "--outpref", required=True,
+                        help="Prefix for output files: {outpref}_0.yaml, "
+                             "{outpref}_1.yaml")
     # Optional arguments
-    parser.add_argument("-u", type=float, default=1.3e-8)
-    parser.add_argument("--max-iter", type=int, default=1000)
-    parser.add_argument("--perturb", type=float, default=0)
+    parser.add_argument("-u", type=float, default=1.5e-8,
+                        help="Mutation rate parameter.")
+    parser.add_argument("--max-iter", type=int, default=10000,
+                        help="Maximum function calls allowed in each stage of"
+                             "optimization.")
+    parser.add_argument("--perturb", type=float, default=0,
+                        help="If > 0, perturb initial parameters for the "
+                             "null model randomly/uniformly by as much as"
+                              "`perturb`-fold.")
     return parser.parse_args()
 
 
@@ -71,8 +90,6 @@ if __name__ == "__main__":
             perturb=perturb,
             **kwargs
         )
-        moments.Demes.Inference._counter = 0
-        print(timestamp(), f"{graph} lbfgsb stage finished, ll={ll}")
         # Stage 2: powell
         pnames, ps, ll = h2py.inference.optimize(
             graph,
@@ -82,14 +99,12 @@ if __name__ == "__main__":
             method="powell",
             **kwargs
         )
-        moments.Demes.Inference._counter = 0
-        print(timestamp(), f"{graph} fmin stage finished, ll={ll}")
         return pnames, ps, -ll
 
     # Fit the null model to convergence
     pnames0, ps0, ll0 = fit_model(args.graph0, args.params0, args.perturb,
-                                  f"{args.out}_H0.yaml")
-    print(timestamp(), f"finished fitting model {args.graph0}!")
+                                  f"{args.outpref}_0.yaml")
+    print(timestamp(), f"Finished fitting model {args.graph0}!")
     # Get default values for parameters absent from the null model
     nest_params = {key: float(val)
                    for key, val in zip(args.nested[::2], args.nested[1::2])}
@@ -110,10 +125,12 @@ if __name__ == "__main__":
     builder1 = _update_builder(builder1, options1, ps1_work)
     work_graph1 = demes.Graph.fromdict(builder1)
     # Write the constructed alternative model to disk
-    model1_start = f"{args.out}_H1_init.yaml"
+    model1_start = f"{args.outpref}_1_init.yaml"
     demes.dump(work_graph1, model1_start)
     # Fit the null model to convergence
     perturb1 = 0
     pnames1, pvals1, ll1 = fit_model(model1_start, args.params1, perturb1,
-                                     f"{args.out}_H1.yaml")
-    print(timestamp(), f"finished fitting model {args.graph1}!")
+                                     f"{args.outpref}_1.yaml")
+    print(timestamp(), f"Finished fitting model {args.graph1}!")
+    print(timestamp(), f"Likelihood difference (LL1 - LL0) = {ll1 - ll0:.4}")
+
