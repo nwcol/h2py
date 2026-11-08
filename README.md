@@ -2,7 +2,7 @@
 
 This is `h2py`, a Python package for evolutionary inference with sparse
 sampling.
-`h2py` is an extension of `moments.LD` (https://github.com/MomentsLD/moments)
+`h2py` is an extension of [`moments.LD`](https://github.com/MomentsLD/moments)
 built around H<sub>2</sub>, a two-locus summary statistic.
 See the documentation for more details, examples, and the API.
 
@@ -75,8 +75,7 @@ If you use `h2py` in your research, please cite
 Collier, N. W., Gravel, S., and Ragsdale, A. P. (2026) 
 Inferring hominin history with recurrent gene flow from single unphased
 genomes and a two-locus statistic.
-BioRxiv, doi: [https://doi.org/10.64898/2026.04.11.717825]
-(https://doi.org/10.64898/2026.04.11.717825)
+BioRxiv, doi: [https://doi.org/10.64898/2026.04.11.717825](https://doi.org/10.64898/2026.04.11.717825)
 
 ```
 @article{collier2026,
