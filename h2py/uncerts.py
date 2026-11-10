@@ -131,9 +131,8 @@ def compute_uncerts(
             bounds=bounds,
             report=report,
         )
-        FIM = np.linalg.inv(-HH)
-        uncerts = np.sqrt(np.diag(FIM))
-        matrix = FIM
+        uncerts = np.sqrt(np.diag(np.linalg.inv(-HH)))
+        matrix = -HH
 
     elif method == "GIM" or method == "godambe":
         if boot_means is None or len(boot_means) == 0:
@@ -193,7 +192,7 @@ def compute_lrt_adjustment(
 ):
     """
     Compute an adjustment factor for the LRT test statistic after Coffman et
-    al 2015.
+    al 2016.
 
     Parameters
     ----------
@@ -264,10 +263,10 @@ def compute_lrt_adjustment(
         bounds=bounds,
         report=report,
     )
-    fac = len(nested_idx) / np.trace(JJ @ np.linalg.inv(HH))
+    fac = len(nested_idx) / np.trace(JJ @ np.linalg.inv(-HH))
 
     if return_matrix:
-        return fac, HH, JJ
+        return fac, -HH, JJ
     else:
         return fac
 

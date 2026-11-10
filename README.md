@@ -1,7 +1,7 @@
-## `h2py`: a tool for inferring multi-population history from ancient DNA
+## `h2py`: a tool for inferring multi-population evolutionary history
 
 This is `h2py`, a Python package for evolutionary inference with sparse
-sampling.
+sampling - typified by ancient DNA (aDNA) sequences.
 `h2py` is an extension of [`moments.LD`](https://github.com/MomentsLD/moments)
 built around H<sub>2</sub>, a two-locus summary statistic.
 See the documentation for more details, examples, and the API.

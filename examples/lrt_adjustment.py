@@ -18,7 +18,7 @@ if not os.path.isdir("data/"):
 
 # Simulation parameters
 L = 1_000_000
-n_reps = 200
+n_reps = 100
 u = 1.5e-8
 r = 1e-8
 r_bins = np.logspace(-6, -2, 17)
@@ -142,8 +142,7 @@ options_file_content = """parameters:
 
 samples = {"pop0": 1, "pop1": 1}
 pop_file = "data/IM_populations.txt"
-pop_file_content = """sample pop
-tsk_0 pop0
+pop_file_content = """tsk_0 pop0
 tsk_1 pop1
 """
 pops = list(samples.keys())
@@ -271,6 +270,26 @@ if __name__ == "__main__":
         r_bins=boot_data["bins"]
     )
 
+    # Compute parameter uncertainty for each model using FIM and GIM methods
+    graph_files = [mle_null_graph_file, mle_graph_file]
+    option_files = [null_options_file, options_file]
+    for graph_file, options_file in zip(graph_files, option_files):
+        for method in ("FIM", "GIM"):
+            print(timestamp(), f"Method: {method}, graph: {graph_file}")
+            h2py.uncerts.compute_uncerts(
+                graph_file,
+                options_file,
+                boot_data["means"],
+                boot_data["varcovs"],
+                boot_means=boot_means,
+                pops=boot_data["pops"],
+                r_bins=boot_data["bins"],
+                u=u,
+                method=method,
+                report=False,
+                readout=True,
+            )
+
     # Calculate the LRT adjustment
     fac = h2py.uncerts.compute_lrt_adjustment(
         null_graph_file,
@@ -289,8 +308,4 @@ if __name__ == "__main__":
     print(f"Naive LRT score: {score:.3}")
     print(f"Adjustment factor: {fac:.3}")
     print(f"Adjusted LRT score: {score * fac:.3}")
-
-
-
-
 
